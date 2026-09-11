@@ -2,6 +2,17 @@ import { Worker } from "../models/worker.model.js";
 import { Cooperative } from "../models/cooperative.model.js";
 import { User } from "../models/user.model.js";
 import { registerUser, loginUser } from "../services/user.service.js";
+import {
+  validateRequired,
+  isValidEmail,
+  isValidMobile,
+  isValidPassword,
+  isValidObjectId,
+  isNonNegativeNumber,
+  isStringArray,
+  throwIfErrors,
+  trim,
+} from "../utils/validation.js";
 
 const registerWorker = async (req, res) => {
   const {
@@ -16,11 +27,40 @@ const registerWorker = async (req, res) => {
     address,
   } = req.body;
 
+  const errors = validateRequired(
+    ["email", "password", "name", "mobileNumber"],
+    req.body
+  );
+
+  if (email && !isValidEmail(email)) {
+    errors.push("Invalid email format");
+  }
+  if (password && !isValidPassword(password)) {
+    errors.push("Password must be at least 6 characters");
+  }
+  if (mobileNumber && !isValidMobile(mobileNumber)) {
+    errors.push("Invalid mobile number format");
+  }
+  if (cooperativeId && !isValidObjectId(cooperativeId)) {
+    errors.push("Invalid cooperativeId");
+  }
+  if (skills !== undefined && !isStringArray(skills)) {
+    errors.push("skills must be an array of non-empty strings");
+  }
+  if (experience !== undefined && !isNonNegativeNumber(experience)) {
+    errors.push("experience must be a non-negative number");
+  }
+  if (certifications !== undefined && !isStringArray(certifications)) {
+    errors.push("certifications must be an array of non-empty strings");
+  }
+
+  throwIfErrors(errors);
+
   const user = await registerUser(
-    email,
+    trim(email),
     password,
-    name,
-    mobileNumber,
+    trim(name),
+    trim(mobileNumber),
     "worker"
   );
 
@@ -30,7 +70,7 @@ const registerWorker = async (req, res) => {
     skills,
     experience,
     certifications,
-    address,
+    address: address ? trim(address) : address,
   });
 
   res.status(201).json({
@@ -42,7 +82,15 @@ const registerWorker = async (req, res) => {
 const loginWorker = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await loginUser(email, password);
+  const errors = validateRequired(["email", "password"], req.body);
+
+  if (email && !isValidEmail(email)) {
+    errors.push("Invalid email format");
+  }
+
+  throwIfErrors(errors);
+
+  const user = await loginUser(trim(email), password);
 
   res.status(200).json({
     message: "Login successful",
@@ -73,6 +121,31 @@ const listWorkers = async (req, res) => {
 };
 
 const updateWorker = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
+  const errors = [];
+  const { skills, experience, certifications, address } = req.body;
+
+  if (skills !== undefined && !isStringArray(skills)) {
+    errors.push("skills must be an array of non-empty strings");
+  }
+  if (experience !== undefined && !isNonNegativeNumber(experience)) {
+    errors.push("experience must be a non-negative number");
+  }
+  if (certifications !== undefined && !isStringArray(certifications)) {
+    errors.push("certifications must be an array of non-empty strings");
+  }
+  if (
+    address !== undefined &&
+    (typeof address !== "string" || address.trim().length === 0)
+  ) {
+    errors.push("address must be a non-empty string");
+  }
+
+  throwIfErrors(errors);
+
   const cooperative = await Cooperative.findOne({
     userId: req.user._id,
   });
@@ -96,12 +169,7 @@ const updateWorker = async (req, res) => {
     });
   }
 
-  const allowedFields = [
-    "skills",
-    "experience",
-    "certifications",
-    "address",
-  ];
+  const allowedFields = ["skills", "experience", "certifications", "address"];
 
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) {
@@ -119,6 +187,10 @@ const updateWorker = async (req, res) => {
 };
 
 const deleteWorker = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
   const cooperative = await Cooperative.findOne({
     userId: req.user._id,
   });
@@ -151,12 +223,17 @@ const deleteWorker = async (req, res) => {
 };
 
 const verifyWorker = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
   const { status } = req.body;
 
   if (!status || !["pending", "verified", "rejected"].includes(status)) {
     return res.status(400).json({
       success: false,
-      message: "Invalid verification status. Must be: pending, verified, or rejected",
+      message:
+        "Invalid verification status. Must be: pending, verified, or rejected",
     });
   }
 
@@ -215,11 +292,37 @@ const registerWorkerByCooperative = async (req, res) => {
     address,
   } = req.body;
 
+  const errors = validateRequired(
+    ["email", "password", "name", "mobileNumber"],
+    req.body
+  );
+
+  if (email && !isValidEmail(email)) {
+    errors.push("Invalid email format");
+  }
+  if (password && !isValidPassword(password)) {
+    errors.push("Password must be at least 6 characters");
+  }
+  if (mobileNumber && !isValidMobile(mobileNumber)) {
+    errors.push("Invalid mobile number format");
+  }
+  if (skills !== undefined && !isStringArray(skills)) {
+    errors.push("skills must be an array of non-empty strings");
+  }
+  if (experience !== undefined && !isNonNegativeNumber(experience)) {
+    errors.push("experience must be a non-negative number");
+  }
+  if (certifications !== undefined && !isStringArray(certifications)) {
+    errors.push("certifications must be an array of non-empty strings");
+  }
+
+  throwIfErrors(errors);
+
   const user = await registerUser(
-    email,
+    trim(email),
     password,
-    name,
-    mobileNumber,
+    trim(name),
+    trim(mobileNumber),
     "worker"
   );
 
@@ -229,7 +332,7 @@ const registerWorkerByCooperative = async (req, res) => {
     skills,
     experience,
     certifications,
-    address,
+    address: address ? trim(address) : address,
     verification: "verified",
   });
 
