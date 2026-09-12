@@ -234,7 +234,8 @@ export default function UserDashboard() {
       setScheduledAt('');
       setAddress('');
       setSelectedFiles(null);
-      fetchMyRequests();
+      await fetchMyRequests();
+      setActiveTab('my-requests');
 
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
