@@ -7,6 +7,7 @@ import {
   deleteWorker,
   verifyWorker,
   registerWorkerByCooperative,
+  getWorkerById,
 } from "../controllers/worker.controller.js";
 import {
   authenticateUser,
@@ -27,6 +28,7 @@ router
   );
 router
   .route("/:id")
+  .get(authenticateUser, requireRole("worker", "cooperative"), getWorkerById)
   .put(authenticateUser, requireRole("cooperative"), updateWorker)
   .delete(authenticateUser, requireRole("cooperative"), deleteWorker);
 router

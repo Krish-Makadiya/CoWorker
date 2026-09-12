@@ -344,6 +344,62 @@ const registerWorkerByCooperative = async (req, res) => {
   });
 };
 
+const getWorkerById = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
+  const worker = await Worker.findById(req.params.id)
+    .populate("userId", "name email mobileNumber")
+    .populate("cooperativeId", "name location");
+
+  if (!worker) {
+    return res.status(404).json({
+      success: false,
+      message: "Worker not found",
+    });
+  }
+
+  let isAuthorized = false;
+
+  if (req.user.roles.includes("worker")) {
+    const requestingWorker = await Worker.findOne({ userId: req.user._id });
+    if (
+      requestingWorker &&
+      requestingWorker._id.toString() === worker._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (req.user.roles.includes("cooperative")) {
+    const requestingCooperative = await Cooperative.findOne({
+      userId: req.user._id,
+    });
+    const coopId = worker.cooperativeId?._id || worker.cooperativeId;
+    if (
+      requestingCooperative &&
+      coopId &&
+      coopId.toString() === requestingCooperative._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+    return res.status(403).json({
+      success: false,
+      message:
+        "Access denied: You are not authorized to view this worker's profile",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    worker,
+  });
+};
+
 export {
   registerWorker,
   loginWorker,
@@ -352,4 +408,5 @@ export {
   deleteWorker,
   verifyWorker,
   registerWorkerByCooperative,
+  getWorkerById,
 };

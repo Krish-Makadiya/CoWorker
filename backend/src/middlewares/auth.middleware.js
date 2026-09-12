@@ -17,7 +17,8 @@ const authenticateUser = async (req, res, next) => {
   next();
 };
 
-const requireRole = (role) => {
+const requireRole = (...roles) => {
+  const allowedRoles = roles.flat();
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -26,10 +27,11 @@ const requireRole = (role) => {
       });
     }
 
-    if (!req.user.roles.includes(role)) {
+    const hasRole = req.user.roles.some((role) => allowedRoles.includes(role));
+    if (!hasRole) {
       return res.status(403).json({
         success: false,
-        message: `Requires ${role} role`,
+        message: `Requires ${allowedRoles.join(" or ")} role`,
       });
     }
 

@@ -18,9 +18,14 @@ const uploadToCloudinary = async (localFilePath) => {
       resource_type: "auto",
     });
     console.log("INFO file uploaded to cloudinary: ", res.url);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
     return res;
   } catch (err) {
-    fs.unlinkSync(localFilePath);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
     return null;
   }
 };
