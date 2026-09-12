@@ -105,6 +105,12 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Login failed');
+
+      if (data.user && data.user._id) {
+        localStorage.setItem('userId', data.user._id);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
       navigate(roleDashboardPath[validRole], { replace: true });
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Something went wrong');

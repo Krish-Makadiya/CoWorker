@@ -14,5 +14,7 @@ export const ROUTES = {
     register: `${API_BASE_URL}/customer/register`,
     login: `${API_BASE_URL}/customer/login`,
   },
+  service: `${API_BASE_URL}/service`,
+  serviceRequests: `${API_BASE_URL}/api/service-requests`,
   health: `${API_BASE_URL}/health`,
 } as const;
