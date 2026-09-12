@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Landing from './pages/Landing';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
@@ -10,6 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <Routes>
         {/* Landing */}
         <Route path="/" element={<Landing />} />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { ROUTES } from '../../config/api';
 
 const INDIAN_STATES = [
@@ -45,13 +45,11 @@ export default function CoopRegisterForm() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-    setApiError('');
   };
 
   const validate = (): boolean => {
@@ -78,7 +76,6 @@ export default function CoopRegisterForm() {
     if (!validate()) return;
 
     setLoading(true);
-    setApiError('');
 
     const payload = {
       name: formData.name.trim(),
@@ -101,9 +98,10 @@ export default function CoopRegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');
+      toast.success('Cooperative registration successful! Please sign in.');
       navigate('/login/cooperative', { replace: true });
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -111,11 +109,6 @@ export default function CoopRegisterForm() {
 
   return (
     <form className="register-form" onSubmit={handleSubmit} noValidate>
-      {apiError && (
-        <div className="alert alert-danger mb-md" role="alert">
-          <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
-        </div>
-      )}
 
       <div className="register-form-grid">
         {/* Cooperative Info */}

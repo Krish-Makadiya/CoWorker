@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { ROUTES } from '../../config/api';
 
 interface CustomerFormData {
@@ -37,14 +38,12 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
   const [detecting, setDetecting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-    setApiError('');
   };
 
   const validate = (): boolean => {
@@ -65,7 +64,7 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
-      setApiError('Geolocation is not supported by your browser.');
+      toast.error('Geolocation is not supported by your browser.');
       return;
     }
     setDetecting(true);
@@ -80,7 +79,7 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
         setDetecting(false);
       },
       () => {
-        setApiError('Could not detect location. Please enter manually.');
+        toast.error('Could not detect location. Please enter manually.');
         setDetecting(false);
       }
     );
@@ -91,7 +90,6 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
     if (!validate()) return;
 
     setLoading(true);
-    setApiError('');
 
     const payload = {
       name: formData.name.trim(),
@@ -113,10 +111,11 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');
+      toast.success('Registration successful! Please sign in.');
       onSuccess?.();
       navigate('/login/customer', { replace: true });
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -124,11 +123,6 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
 
   return (
     <form className="register-form" onSubmit={handleSubmit} noValidate>
-      {apiError && (
-        <div className="alert alert-danger mb-md" role="alert">
-          <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
-        </div>
-      )}
 
       <div className="register-form-grid">
         {/* Personal Info */}

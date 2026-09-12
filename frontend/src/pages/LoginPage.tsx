@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { User, Wrench, Landmark, XCircle, AlertTriangle } from 'lucide-react';
+import { User, Wrench, Landmark, XCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { ROUTES } from '../config/api';
 import './Login.css';
 
@@ -50,7 +51,6 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
-  const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -110,7 +110,6 @@ export default function LoginPage() {
     if (!validate()) return;
 
     setLoading(true);
-    setApiError('');
 
     const isPhone = /^[6-9]\d{9}$/.test(identifier.trim());
     const payload = isPhone
@@ -131,6 +130,8 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
+      toast.success('Signed in successfully!');
+
       // Determine target dashboard based on actual user roles returned from backend
       const userRoles: string[] = Array.isArray(data.user?.roles) ? data.user.roles : [];
       const primaryRole = (userRoles[0] as RoleParam) || validRole;
@@ -138,7 +139,7 @@ export default function LoginPage() {
 
       navigate(targetDashboard, { replace: true });
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -176,11 +177,6 @@ export default function LoginPage() {
 
           {/* Form */}
           <form className="login-form" onSubmit={handleSubmit} noValidate>
-            {apiError && (
-              <div className="alert alert-danger mb-md" role="alert">
-                <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
-              </div>
-            )}
 
             <div className="login-form-grid">
               <div className="form-group">
@@ -197,7 +193,6 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setIdentifier(e.target.value);
                     if (errors.identifier) setErrors(prev => ({ ...prev, identifier: '' }));
-                    setApiError('');
                   }}
                   autoComplete="username"
                   autoFocus
@@ -219,7 +214,6 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                    setApiError('');
                   }}
                   autoComplete="current-password"
                 />

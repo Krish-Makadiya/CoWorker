@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   FileText,
   MapPin,
-  ShieldAlert,
   ShieldCheck,
   UserCheck,
   Zap,
@@ -14,6 +13,7 @@ import {
   Mail,
   Phone
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import type { CooperativeItem } from "./Navbar";
 
 interface FederationOnboardingProps {
@@ -24,76 +24,62 @@ interface FederationOnboardingProps {
 export default function FederationOnboarding({ onComplete, onCancel }: FederationOnboardingProps) {
   const [step, setStep] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
-    registrationNumber: `COOP-MH-2026-00${Math.floor(Math.random() * 90 + 10)}`,
     email: "",
     password: "",
+    confirmPassword: "",
     mobileNumber: "",
+    registrationNumber: "",
     city: "",
-    state: "Maharashtra",
+    state: "",
     pinCode: "",
     streetAddress: "",
     primarySector: "Agriculture & Allied",
-    memberCapacity: "100-500 Workers",
+    memberCapacity: "100-500 Members",
     description: "Registered Cooperative Federation dedicated to organizing and empowering skilled gig workers.",
     statutoryDeclaration: true
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setError("");
-
+  const handleNext = () => {
     if (step === 1) {
-      if (!formData.name.trim()) return setError("Federation Name is required.");
-      if (!formData.registrationNumber.trim()) return setError("Registration Number is required.");
-      if (!formData.email.trim()) return setError("Official Email is required.");
-      if (!formData.password || formData.password.length < 6) return setError("Password must be at least 6 characters.");
-      if (!formData.mobileNumber.trim()) return setError("Mobile Number is required.");
-    }
-
-    if (step === 2) {
-      if (!formData.city.trim()) return setError("City is required.");
-      if (!formData.state.trim()) return setError("State is required.");
-      if (!formData.pinCode.trim()) return setError("Pin Code is required.");
-    }
-
-    if (step === 3) {
-      if (!formData.statutoryDeclaration) {
-        return setError("You must agree to the Statutory Declaration to establish the Federation.");
+      if (!formData.name || !formData.email || !formData.password || !formData.registrationNumber) {
+        toast.error("Please fill in all mandatory identity and admin fields.");
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords do not match. Please verify.");
+        return;
+      }
+    } else if (step === 2) {
+      if (!formData.city || !formData.state || !formData.pinCode) {
+        toast.error("Please fill in city, state, and pin code.");
+        return;
       }
     }
-
     setStep((prev) => Math.min(prev + 1, 4));
   };
 
   const handlePrev = () => {
-    setError("");
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const payload = {
         name: formData.name,
-        registrationNumber: formData.registrationNumber,
         email: formData.email,
         password: formData.password,
-        mobileNumber: formData.mobileNumber,
+        mobileNumber: formData.mobileNumber || "9876543210",
+        registrationNumber: formData.registrationNumber,
         address: {
           city: formData.city,
           state: formData.state,
@@ -113,11 +99,12 @@ export default function FederationOnboarding({ onComplete, onCancel }: Federatio
         throw new Error(data.message || "Failed to register federation");
       }
 
+      toast.success("Federation registered successfully!");
       if (onComplete) {
         onComplete(data.cooperative);
       }
     } catch (err: any) {
-      setError(err.message || "Something went wrong during registration.");
+      toast.error(err.message || "Something went wrong during registration.");
     } finally {
       setLoading(false);
     }
@@ -178,24 +165,17 @@ export default function FederationOnboarding({ onComplete, onCancel }: Federatio
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "0.88rem",
+                    background: isActive ? "var(--primary)" : isDone ? "var(--emerald-bg)" : "var(--bg-tertiary)",
+                    color: isActive ? "#ffffff" : isDone ? "var(--emerald-text)" : "var(--text-muted)",
                     fontWeight: 700,
-                    background: isDone
-                      ? "var(--emerald-bg)"
-                      : isActive
-                      ? "var(--primary)"
-                      : "#f0f4ef",
-                    color: isDone ? "var(--emerald-text)" : isActive ? "#ffffff" : "var(--text-dim)",
-                    border: isDone ? "1px solid var(--emerald-border)" : isActive ? "none" : "1px solid var(--border-color)"
+                    fontSize: "0.88rem"
                   }}
                 >
                   {isDone ? <CheckCircle2 size={18} /> : <IconComponent size={17} />}
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>
-                    Step 0{item.num}
-                  </div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 600, color: isActive ? "var(--text-main)" : "var(--text-muted)" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>STEP {item.num}</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: isActive ? "var(--text-main)" : "var(--text-muted)" }}>
                     {item.label}
                   </div>
                 </div>
@@ -204,27 +184,6 @@ export default function FederationOnboarding({ onComplete, onCancel }: Federatio
           })}
         </div>
       </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div
-          style={{
-            background: "var(--rose-bg)",
-            border: "1px solid var(--rose-border)",
-            color: "var(--rose-text)",
-            borderRadius: "var(--radius-md)",
-            padding: "14px 18px",
-            marginBottom: "24px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            fontSize: "0.9rem"
-          }}
-        >
-          <ShieldAlert size={20} />
-          <div>{error}</div>
-        </div>
-      )}
 
       {/* Step Form Body */}
       <div className="glass-card" style={{ padding: "36px", background: "#ffffff" }}>

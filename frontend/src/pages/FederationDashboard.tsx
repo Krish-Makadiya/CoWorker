@@ -15,9 +15,9 @@ import {
   Star,
   Search,
   Plus,
-  UserPlus,
-  X
+  UserPlus
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import Navbar, { type CooperativeItem } from "../components/Navbar";
 import FederationOnboarding from "../components/FederationOnboarding";
 
@@ -31,8 +31,6 @@ export default function FederationDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "workers" | "verification" | "workerView">("overview");
   const [workers, setWorkers] = useState<any[]>([]);
   const [loadingWorkers, setLoadingWorkers] = useState<boolean>(false);
-  const [errorMsg, setErrorMsg] = useState<string>("");
-  const [successMsg, setSuccessMsg] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Edit profile state
@@ -108,7 +106,6 @@ export default function FederationDashboard() {
   const fetchWorkers = async () => {
     if (!userId) return;
     setLoadingWorkers(true);
-    setErrorMsg("");
 
     try {
       const response = await fetch("http://localhost:8000/worker", {
@@ -131,8 +128,8 @@ export default function FederationDashboard() {
   };
 
   useEffect(() => {
-    fetchWorkers();
     if (cooperative) {
+      fetchWorkers();
       setEditFormData({
         name: cooperative.name || "",
         registrationNumber: cooperative.registrationNumber || "",
@@ -148,9 +145,6 @@ export default function FederationDashboard() {
   }, [cooperative]);
 
   const handleUpdateStatus = async (workerId: string, newStatus: string) => {
-    setErrorMsg("");
-    setSuccessMsg("");
-
     try {
       const response = await fetch(`http://localhost:8000/worker/${workerId}/verify`, {
         method: "PATCH",
@@ -167,17 +161,15 @@ export default function FederationDashboard() {
         throw new Error(data.message || "Failed to update worker verification status");
       }
 
-      setSuccessMsg(data.message || `Worker verification status updated to '${newStatus}'`);
+      toast.success(data.message || `Worker verification status updated to '${newStatus}'`);
       fetchWorkers();
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to update worker verification status.");
+      toast.error(err.message || "Failed to update worker verification status.");
     }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
 
     try {
       const payload = {
@@ -205,21 +197,19 @@ export default function FederationDashboard() {
         throw new Error(data.message || "Failed to update profile");
       }
 
-      setSuccessMsg("Federation profile updated successfully!");
+      toast.success("Federation profile updated successfully!");
       setIsEditing(false);
       fetchCooperatives();
     } catch (err: any) {
-      setErrorMsg(err.message || "Error updating federation profile.");
+      toast.error(err.message || "Error updating federation profile.");
     }
   };
 
   const handleAddWorkerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
 
     if (workerFormData.password !== workerFormData.confirmPassword) {
-      setErrorMsg("Passwords do not match. Please verify and try again.");
+      toast.error("Passwords do not match. Please verify and try again.");
       return;
     }
 
@@ -257,7 +247,7 @@ export default function FederationDashboard() {
         throw new Error(data.message || "Failed to register worker");
       }
 
-      setSuccessMsg(`Worker '${workerFormData.name}' registered & added directly as verified member!`);
+      toast.success(`Worker '${workerFormData.name}' registered & added directly as verified member!`);
       setIsAddingWorker(false);
       setWorkerFormData({
         name: "",
@@ -273,7 +263,7 @@ export default function FederationDashboard() {
       });
       fetchWorkers();
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to add worker directly.");
+      toast.error(err.message || "Failed to add worker directly.");
     } finally {
       setSubmittingWorker(false);
     }
@@ -298,67 +288,26 @@ export default function FederationDashboard() {
         selectedCoopId={selectedCoopId}
         onSelectCoop={handleSelectCoop}
         onStartOnboarding={() => setIsAddingNewOnboarding(true)}
-        onRefresh={fetchCooperatives}
-        loading={loading}
+        onRefresh={() => {
+          fetchCooperatives();
+          fetchWorkers();
+          toast.success("Database records refreshed");
+        }}
+        loading={loading || loadingWorkers}
       />
 
       {isAddingNewOnboarding ? (
         <FederationOnboarding
-          onComplete={(newCoop) => {
+          onCancel={() => setIsAddingNewOnboarding(false)}
+          onComplete={() => {
             setIsAddingNewOnboarding(false);
             fetchCooperatives();
-            if (newCoop?._id) setSelectedCoopId(newCoop._id);
+            toast.success("New Federation onboarded successfully!");
           }}
-          onCancel={() => setIsAddingNewOnboarding(false)}
         />
       ) : (
         <div className="animate-fade-in" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 64px 16px" }}>
           
-          {/* Alerts */}
-          {successMsg && (
-            <div
-              className="animate-fade-in"
-              style={{
-                background: "var(--emerald-bg, #e6f4ea)",
-                border: "1px solid var(--emerald-border, #ceead6)",
-                borderRadius: "8px",
-                padding: "12px 20px",
-                marginBottom: "20px",
-                color: "var(--emerald-text, #137333)",
-                fontSize: "0.88rem",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <CheckCircle2 size={17} /> {successMsg}
-              </div>
-              <button onClick={() => setSuccessMsg("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={16} /></button>
-            </div>
-          )}
-
-          {errorMsg && (
-            <div
-              className="animate-fade-in"
-              style={{
-                background: "#fce8e6",
-                border: "1px solid #fad2cf",
-                borderRadius: "8px",
-                padding: "12px 20px",
-                marginBottom: "20px",
-                color: "#c5221f",
-                fontSize: "0.88rem",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-            >
-              <div>{errorMsg}</div>
-              <button onClick={() => setErrorMsg("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={16} /></button>
-            </div>
-          )}
-
           {/* Minimal Header Card */}
           <div className="glass-card" style={{ padding: "28px 32px", marginBottom: "24px", background: "#ffffff", borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "20px" }}>

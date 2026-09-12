@@ -5,8 +5,6 @@ import {
   ClipboardList,
   Plus,
   Wrench,
-  AlertTriangle,
-  CheckCircle2,
   ShoppingCart,
   MapPin,
   Calendar,
@@ -15,6 +13,7 @@ import {
   Loader2,
   Rocket
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { ROUTES } from '../config/api';
 import './Dashboard.css';
 
@@ -86,8 +85,6 @@ export default function UserDashboard() {
   const [requests, setRequests] = useState<ServiceRequestItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingServices, setFetchingServices] = useState(false);
-  const [apiError, setApiError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   // Form state for creating a new Service Request
   const [selectedServiceId, setSelectedServiceId] = useState('');
@@ -158,7 +155,7 @@ export default function UserDashboard() {
   // Handle GPS location click
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      setApiError('Geolocation is not supported by your browser.');
+      toast.error('Geolocation is not supported by your browser.');
       return;
     }
     setGeoLocating(true);
@@ -170,9 +167,10 @@ export default function UserDashboard() {
           setAddress(`GPS: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
         }
         setGeoLocating(false);
+        toast.success('Location detected successfully!');
       },
       () => {
-        setApiError('Unable to retrieve GPS coordinates. Defaulting to system location.');
+        toast.error('Unable to retrieve GPS coordinates. Defaulting to system location.');
         setGeoLocating(false);
       }
     );
@@ -181,15 +179,13 @@ export default function UserDashboard() {
   // Form submission: Create new service request
   const handleSubmitRequest = async (e: FormEvent) => {
     e.preventDefault();
-    setApiError('');
-    setSuccessMsg('');
 
     if (!selectedServiceId) {
-      setApiError('Please select a service type');
+      toast.error('Please select a service type');
       return;
     }
     if (!title.trim() || !description.trim() || !address.trim() || !scheduledAt) {
-      setApiError('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -221,10 +217,11 @@ export default function UserDashboard() {
 
       const createdRequestId = data.serviceRequest?._id;
       if (createdRequestId && selectedFiles && selectedFiles.length > 0) {
-        setSuccessMsg('Request created! Uploading before photos to Cloudinary...');
+        toast.loading('Request created! Uploading before photos...', { id: 'photo-upload' });
         await handleUploadPrePhotos(createdRequestId, selectedFiles);
+        toast.dismiss('photo-upload');
       } else {
-        setSuccessMsg('Service request submitted successfully! Workers near your area will be notified.');
+        toast.success('Service request submitted successfully!');
       }
 
       // Reset form
@@ -236,10 +233,8 @@ export default function UserDashboard() {
       setSelectedFiles(null);
       await fetchMyRequests();
       setActiveTab('my-requests');
-
-      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Error creating service request');
+      toast.error(err instanceof Error ? err.message : 'Error creating service request');
     } finally {
       setLoading(false);
     }
@@ -256,13 +251,14 @@ export default function UserDashboard() {
       });
 
       if (res.ok) {
+        toast.success('Service request cancelled successfully.');
         fetchMyRequests();
       } else {
         const data = await res.json();
-        alert(data.message || 'Unable to cancel service request.');
+        toast.error(data.message || 'Unable to cancel service request.');
       }
     } catch {
-      alert('Error connecting to backend server.');
+      toast.error('Error connecting to backend server.');
     }
   };
 
@@ -271,7 +267,6 @@ export default function UserDashboard() {
     if (!files || files.length === 0) return;
 
     setLoading(true);
-    setApiError('');
     try {
       const formData = new FormData();
       Array.from(files).forEach((file) => {
@@ -295,11 +290,10 @@ export default function UserDashboard() {
         throw new Error(data.message || 'Failed to upload pre-service photos');
       }
 
-      setSuccessMsg('Pre-service photos uploaded to Cloudinary successfully!');
+      toast.success('Pre-service photos uploaded to Cloudinary successfully!');
       fetchMyRequests();
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Error uploading photos to Cloudinary');
+      toast.error(err instanceof Error ? err.message : 'Error uploading photos to Cloudinary');
     } finally {
       setLoading(false);
     }
@@ -315,6 +309,7 @@ export default function UserDashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
+    toast.success('Logged out successfully.');
     navigate('/', { replace: true });
   };
 
@@ -367,20 +362,6 @@ export default function UserDashboard() {
             </button>
           </div>
         </div>
-
-        {/* Global Messages */}
-        {apiError && (
-          <div className="alert alert-danger mb-md" style={{ margin: '0 auto 1.5rem', maxWidth: '720px' }}>
-            <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="alert alert-success mb-md" style={{ margin: '0 auto 1.5rem', maxWidth: '720px' }}>
-            <CheckCircle2 size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} />
-            <span>{successMsg}</span>
-          </div>
-        )}
 
         {/* TAB 1: MY REQUESTS */}
         {activeTab === 'my-requests' && (
