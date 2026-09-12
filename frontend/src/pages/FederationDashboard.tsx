@@ -51,7 +51,8 @@ export default function FederationDashboard() {
     name: "",
     email: "",
     mobileNumber: "",
-    password: "Password123!",
+    password: "",
+    confirmPassword: "",
     skills: "Plumbing, Electrical",
     experience: 3,
     certifications: "ITI Plumbing",
@@ -208,6 +209,12 @@ export default function FederationDashboard() {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
+
+    if (workerFormData.password !== workerFormData.confirmPassword) {
+      setErrorMsg("Passwords do not match. Please verify and try again.");
+      return;
+    }
+
     setSubmittingWorker(true);
 
     try {
@@ -224,12 +231,15 @@ export default function FederationDashboard() {
         experience: Number(workerFormData.experience) || 0,
         certifications: certsArray,
         address: workerFormData.address,
-        verification: workerFormData.verification
+        verification: "verified"
       };
 
-      const response = await fetch("http://localhost:8000/worker/register", {
+      const response = await fetch("http://localhost:8000/worker/register-by-cooperative", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": typeof userId === "object" ? userId._id : userId
+        },
         body: JSON.stringify(payload)
       });
 
@@ -239,13 +249,14 @@ export default function FederationDashboard() {
         throw new Error(data.message || "Failed to register worker");
       }
 
-      setSuccessMsg(`Worker '${workerFormData.name}' registered & added successfully!`);
+      setSuccessMsg(`Worker '${workerFormData.name}' registered & added directly as verified member!`);
       setIsAddingWorker(false);
       setWorkerFormData({
         name: "",
         email: "",
         mobileNumber: "",
-        password: "Password123!",
+        password: "",
+        confirmPassword: "",
         skills: "Plumbing, Electrical",
         experience: 3,
         certifications: "ITI Plumbing",
@@ -569,6 +580,42 @@ export default function FederationDashboard() {
                     placeholder="+91 9876543210"
                     style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
                   />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={workerFormData.password}
+                    onChange={(e) => setWorkerFormData({ ...workerFormData, password: e.target.value })}
+                    placeholder="Set worker password (min 6 chars)"
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>Confirm Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={workerFormData.confirmPassword}
+                    onChange={(e) => setWorkerFormData({ ...workerFormData, confirmPassword: e.target.value })}
+                    placeholder="Confirm worker password"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: workerFormData.confirmPassword && workerFormData.password !== workerFormData.confirmPassword
+                        ? "1px solid #c5221f"
+                        : "1px solid #dadce0"
+                    }}
+                  />
+                  {workerFormData.confirmPassword && workerFormData.password !== workerFormData.confirmPassword && (
+                    <span style={{ fontSize: "0.75rem", color: "#c5221f", marginTop: "2px", display: "block" }}>
+                      Passwords do not match
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>Skills (comma separated)</label>

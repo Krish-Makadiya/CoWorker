@@ -71,6 +71,7 @@ const registerWorker = async (req, res) => {
     experience,
     certifications,
     address: address ? trim(address) : address,
+    verification: req.body.verification || "pending",
   });
 
   res.status(201).json({
