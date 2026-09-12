@@ -38,7 +38,10 @@ const createServiceRequest = async (req, res) => {
   }
 
   const finalAddress = address ? trim(address) : customer.address;
-  if (!finalAddress || (typeof finalAddress === "string" && finalAddress.trim().length === 0)) {
+  if (
+    !finalAddress ||
+    (typeof finalAddress === "string" && finalAddress.trim().length === 0)
+  ) {
     errors.push("address is required");
   }
 
@@ -80,7 +83,9 @@ const getMyServiceRequests = async (req, res) => {
     throw new ExpressError("Customer profile not found", 404);
   }
 
-  const serviceRequests = await ServiceRequest.find({ customerId: customer._id })
+  const serviceRequests = await ServiceRequest.find({
+    customerId: customer._id,
+  })
     .populate("serviceId")
     .populate({
       path: "workerId",
@@ -187,7 +192,10 @@ const uploadPrePhotos = async (req, res) => {
   }
 
   if (serviceRequest.customerId.toString() !== customer._id.toString()) {
-    throw new ExpressError("You are not authorized to modify this service request", 403);
+    throw new ExpressError(
+      "You are not authorized to modify this service request",
+      403
+    );
   }
 
   const files = req.files || (req.file ? [req.file] : []);
@@ -196,10 +204,20 @@ const uploadPrePhotos = async (req, res) => {
   }
 
   const photoUrls = [];
+
   for (const file of files) {
+    console.log(
+      `[Cloudinary] Uploading: ${file.filename} (${file.size} bytes)`
+    );
+
     const uploadRes = await uploadToCloudinary(file.path);
-    if (uploadRes && (uploadRes.secure_url || uploadRes.url)) {
-      photoUrls.push(uploadRes.secure_url || uploadRes.url);
+
+    if (uploadRes?.secure_url || uploadRes?.url) {
+      const url = uploadRes.secure_url || uploadRes.url;
+      photoUrls.push(url);
+      console.log(`[Cloudinary] Uploaded: ${file.filename} → ${url}`);
+    } else {
+      console.log(`[Cloudinary] Failed: ${file.filename}`);
     }
   }
 

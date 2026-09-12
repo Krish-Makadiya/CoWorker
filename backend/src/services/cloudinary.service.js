@@ -10,22 +10,31 @@ cloudinary.config({
 const uploadToCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) {
+      console.log("[Cloudinary] No file path provided");
       return null;
     }
 
-    // upload file
     const res = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
+      folder: "coWorker",
     });
-    console.log("INFO file uploaded to cloudinary: ", res.url);
+
+    console.log(`[Cloudinary] Success: ${res.public_id}`);
+
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
+
     return res;
   } catch (err) {
-    if (fs.existsSync(localFilePath)) {
+    console.error(
+      `[Cloudinary] Error: ${err.message} (HTTP ${err.http_code || "N/A"})`
+    );
+
+    if (localFilePath && fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
+
     return null;
   }
 };
