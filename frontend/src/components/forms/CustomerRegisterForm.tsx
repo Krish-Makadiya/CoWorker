@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Loader2, MapPin } from 'lucide-react';
 import { ROUTES } from '../../config/api';
 
 interface CustomerFormData {
@@ -125,7 +126,7 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
     <form className="register-form" onSubmit={handleSubmit} noValidate>
       {apiError && (
         <div className="alert alert-danger mb-md" role="alert">
-          <span>⚠️</span> {apiError}
+          <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
         </div>
       )}
 
@@ -257,7 +258,7 @@ export default function CustomerRegisterForm({ onSuccess }: CustomerRegisterForm
               onClick={detectLocation}
               disabled={detecting}
             >
-              {detecting ? '⏳ Detecting...' : '📍 Detect Location'}
+              {detecting ? <><Loader2 className="animate-spin" size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Detecting...</> : <><MapPin size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Detect Location</>}
             </button>
           </div>
           <div className="location-coords">

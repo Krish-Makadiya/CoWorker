@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { ROUTES } from '../../config/api';
 import TagInput from '../TagInput';
 
@@ -98,7 +99,7 @@ export default function WorkerRegisterForm() {
     <form className="register-form" onSubmit={handleSubmit} noValidate>
       {apiError && (
         <div className="alert alert-danger mb-md" role="alert">
-          <span>⚠️</span> {apiError}
+          <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
         </div>
       )}
 

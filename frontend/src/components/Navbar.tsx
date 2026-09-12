@@ -99,12 +99,12 @@ export default function Navbar({
               <optgroup label="MongoDB Federations">
                 {cooperatives.map((c) => (
                   <option key={c._id} value={c._id}>
-                    🏢 {c.name} ({c.address?.city || "Registered"})
+                    {c.name} ({c.address?.city || "Registered"})
                   </option>
                 ))}
               </optgroup>
               <option value="NEW_ONBOARDING">
-                ✨ + Onboard New Federation...
+                + Onboard New Federation...
               </option>
             </select>
           </div>

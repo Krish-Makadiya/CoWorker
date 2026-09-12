@@ -1,29 +1,30 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { User, Wrench, Landmark, XCircle, AlertTriangle } from 'lucide-react';
 import { ROUTES } from '../config/api';
 import './Login.css';
 
 type RoleParam = 'customer' | 'worker' | 'cooperative';
 
-const roleConfig: Record<RoleParam, { label: string; title: string; subtitle: string; emoji: string }> = {
+const roleConfig: Record<RoleParam, { label: string; title: string; subtitle: string; icon: React.ReactNode }> = {
   customer: {
     label: 'User',
     title: 'Welcome back',
     subtitle: 'Sign in to your user account',
-    emoji: '👤',
+    icon: <User size={18} />,
   },
   worker: {
     label: 'Worker',
     title: 'Welcome back',
     subtitle: 'Sign in to your worker account',
-    emoji: '🔧',
+    icon: <Wrench size={18} />,
   },
   cooperative: {
     label: 'Union / Cooperative',
     title: 'Welcome back',
     subtitle: 'Sign in to your cooperative account',
-    emoji: '🏛️',
+    icon: <Landmark size={18} />,
   },
 };
 
@@ -58,7 +59,7 @@ export default function LoginPage() {
         <div className="login-content">
           <div className="login-card">
             <div className="login-error-state">
-              <div className="login-error-icon">❌</div>
+              <div className="login-error-icon"><XCircle size={48} color="var(--danger, #ef4444)" /></div>
               <h2>Invalid Role</h2>
               <p>The login role "{role}" is not valid.</p>
               <Link to="/" className="btn btn-primary btn-lg">Back to Home</Link>
@@ -142,7 +143,7 @@ export default function LoginPage() {
           {/* Card Header */}
           <div className="login-card-header">
             <div className="login-role-badge">
-              <span>{config.emoji}</span>
+              <span>{config.icon}</span>
               {config.label}
             </div>
             <h1>{config.title}</h1>
@@ -153,7 +154,7 @@ export default function LoginPage() {
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             {apiError && (
               <div className="alert alert-danger mb-md" role="alert">
-                <span>⚠️</span> {apiError}
+                <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
               </div>
             )}
 

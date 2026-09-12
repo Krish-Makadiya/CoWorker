@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  ClipboardList,
+  Plus,
+  Wrench,
+  AlertTriangle,
+  CheckCircle2,
+  ShoppingCart,
+  MapPin,
+  Calendar,
+  HardHat,
+  Camera,
+  Loader2,
+  Rocket
+} from 'lucide-react';
 import { ROUTES } from '../config/api';
 import './Dashboard.css';
 
@@ -207,10 +221,10 @@ export default function UserDashboard() {
 
       const createdRequestId = data.serviceRequest?._id;
       if (createdRequestId && selectedFiles && selectedFiles.length > 0) {
-        setSuccessMsg('✅ Request created! Uploading before photos to Cloudinary...');
+        setSuccessMsg('Request created! Uploading before photos to Cloudinary...');
         await handleUploadPrePhotos(createdRequestId, selectedFiles);
       } else {
-        setSuccessMsg('✅ Service request submitted successfully! Workers near your area will be notified.');
+        setSuccessMsg('Service request submitted successfully! Workers near your area will be notified.');
       }
 
       // Reset form
@@ -218,16 +232,13 @@ export default function UserDashboard() {
       setDescription('');
       setSelectedServiceId('');
       setScheduledAt('');
+      setAddress('');
       setSelectedFiles(null);
+      fetchMyRequests();
 
-      // Refresh list and switch to My Requests tab after 1.2 seconds
-      setTimeout(() => {
-        fetchMyRequests();
-        setActiveTab('my-requests');
-        setSuccessMsg('');
-      }, 1200);
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong. Please check your backend connection.');
+      setApiError(err instanceof Error ? err.message : 'Error creating service request');
     } finally {
       setLoading(false);
     }
@@ -257,25 +268,17 @@ export default function UserDashboard() {
   // Upload Pre-service Photos to Cloudinary backend route
   const handleUploadPrePhotos = async (requestId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
+
     setLoading(true);
     setApiError('');
-    setSuccessMsg('');
-
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('photos', files[i]);
-    }
-
-    const userId = localStorage.getItem('userId') || '';
-    const token = localStorage.getItem('token') || '';
-    const headers: Record<string, string> = {};
-    if (userId) headers['user-id'] = userId;
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     try {
-      const res = await fetch(`${ROUTES.serviceRequests}/${requestId}/pre-photos`, {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => {
+        formData.append('preServicePhotos', file);
+      });
+
+      const res = await fetch(ROUTES.customer.uploadPrePhotos(requestId), {
         method: 'POST',
-        headers,
         body: formData,
       });
 
@@ -284,7 +287,7 @@ export default function UserDashboard() {
         throw new Error(data.message || 'Failed to upload pre-service photos');
       }
 
-      setSuccessMsg('📸 Pre-service photos uploaded to Cloudinary successfully!');
+      setSuccessMsg('Pre-service photos uploaded to Cloudinary successfully!');
       fetchMyRequests();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
@@ -333,21 +336,21 @@ export default function UserDashboard() {
               className={`customer-tab-btn ${activeTab === 'my-requests' ? 'active' : ''}`}
               onClick={() => setActiveTab('my-requests')}
             >
-              📋 My Requests ({requests.length})
+              <ClipboardList size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> My Requests ({requests.length})
             </button>
 
             <button
               className={`customer-tab-btn ${activeTab === 'new-request' ? 'active' : ''}`}
               onClick={() => setActiveTab('new-request')}
             >
-              ➕ Book New Service
+              <Plus size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Book New Service
             </button>
 
             <button
               className={`customer-tab-btn ${activeTab === 'browse' ? 'active' : ''}`}
               onClick={() => setActiveTab('browse')}
             >
-              🛠️ Browse Services
+              <Wrench size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Browse Services
             </button>
           </div>
         </div>
@@ -355,12 +358,13 @@ export default function UserDashboard() {
         {/* Global Messages */}
         {apiError && (
           <div className="alert alert-danger mb-md" style={{ margin: '0 auto 1.5rem', maxWidth: '720px' }}>
-            <span>⚠️</span> {apiError}
+            <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> {apiError}
           </div>
         )}
 
         {successMsg && (
           <div className="alert alert-success mb-md" style={{ margin: '0 auto 1.5rem', maxWidth: '720px' }}>
+            <CheckCircle2 size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} />
             <span>{successMsg}</span>
           </div>
         )}
@@ -374,14 +378,14 @@ export default function UserDashboard() {
               </div>
             ) : requests.length === 0 ? (
               <div className="empty-requests-state">
-                <div className="empty-requests-icon">🛒</div>
+                <div className="empty-requests-icon"><ShoppingCart size={48} /></div>
                 <h3>No service requests found</h3>
                 <p>You haven't requested any home services yet. Open a new request to get matched with verified gig professionals.</p>
                 <button
                   className="btn btn-primary btn-lg"
                   onClick={() => setActiveTab('new-request')}
                 >
-                  ➕ Open New Service Request
+                  <Plus size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Open New Service Request
                 </button>
               </div>
             ) : (
@@ -401,17 +405,17 @@ export default function UserDashboard() {
                       </p>
 
                       <div className="request-meta">
-                        <span>📍 Address: {item.address}</span>
-                        <span>📅 Scheduled: {new Date(item.scheduledAt).toLocaleString()}</span>
+                        <span><MapPin size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Address: {item.address}</span>
+                        <span><Calendar size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Scheduled: {new Date(item.scheduledAt).toLocaleString()}</span>
                         {item.workerId && (
-                          <span>👷 Assigned Worker: {item.workerId.name || 'Verified Professional'}</span>
+                          <span><HardHat size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Assigned Worker: {item.workerId.name || 'Verified Professional'}</span>
                         )}
                       </div>
 
                       {/* Uploaded Pre-Service Photos */}
                       {item.preServicePhotos && item.preServicePhotos.length > 0 && (
                         <div className="request-photos-grid">
-                          <span className="photo-label">📷 Before Photos ({item.preServicePhotos.length}):</span>
+                          <span className="photo-label"><Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Before Photos ({item.preServicePhotos.length}):</span>
                           <div className="photos-row">
                             {item.preServicePhotos.map((url, idx) => (
                               <img key={idx} src={url} alt={`Pre-service ${idx}`} className="photo-thumb" />
@@ -424,7 +428,7 @@ export default function UserDashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
                       {/* Photo Upload Button */}
                       <label className="btn-upload-photo" htmlFor={`photo-upload-${item._id}`}>
-                        📷 Add Before Photos
+                        <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Add Before Photos
                       </label>
                       <input
                         id={`photo-upload-${item._id}`}
@@ -546,7 +550,7 @@ export default function UserDashboard() {
                         onClick={handleGetLocation}
                         disabled={geoLocating}
                       >
-                        {geoLocating ? 'Locating...' : '📍 Auto GPS'}
+                        {geoLocating ? <><Loader2 className="animate-spin" size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Locating...</> : <><MapPin size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Auto GPS</>}
                       </button>
                     </div>
                   </div>
@@ -567,7 +571,7 @@ export default function UserDashboard() {
 
                 <div className="form-group mb-md">
                   <label className="form-label" htmlFor="request-photos">
-                    Attach Before Photos (Optional) 📷
+                    Attach Before Photos (Optional) <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginLeft: '4px' }} />
                   </label>
                   <input
                     id="request-photos"
@@ -579,7 +583,7 @@ export default function UserDashboard() {
                   />
                   {selectedFiles && selectedFiles.length > 0 && (
                     <small style={{ color: '#059669', fontWeight: 600, marginTop: '0.35rem', display: 'block' }}>
-                      📸 {selectedFiles.length} photo(s) selected for Cloudinary upload
+                      <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> {selectedFiles.length} photo(s) selected for Cloudinary upload
                     </small>
                   )}
                 </div>
@@ -590,7 +594,7 @@ export default function UserDashboard() {
                   disabled={loading}
                   style={{ marginTop: '1rem' }}
                 >
-                  {loading ? <><span className="spinner" /> Submitting Request...</> : '🚀 Confirm & Open Service Request'}
+                  {loading ? <><span className="spinner" /> Submitting Request...</> : <><Rocket size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Confirm & Open Service Request</>}
                 </button>
               </form>
             </div>

@@ -10,7 +10,9 @@ import {
   ShieldCheck,
   UserCheck,
   Zap,
-  Info
+  Info,
+  Mail,
+  Phone
 } from "lucide-react";
 import type { CooperativeItem } from "./Navbar";
 
@@ -476,14 +478,14 @@ export default function FederationOnboarding({ onComplete, onCancel }: Federatio
               <div>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>Location & Jurisdiction</span>
                 <div style={{ fontSize: "0.92rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                  📍 {formData.city}, {formData.state} - {formData.pinCode}
+                  <MapPin size={14} style={{ display: "inline", verticalAlign: "text-bottom", marginRight: "4px" }} /> {formData.city}, {formData.state} - {formData.pinCode}
                 </div>
               </div>
 
               <div>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>Contact Info</span>
                 <div style={{ fontSize: "0.92rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                  ✉️ {formData.email} | 📞 {formData.mobileNumber}
+                  <Mail size={14} style={{ display: "inline", verticalAlign: "text-bottom", marginRight: "4px" }} /> {formData.email} | <Phone size={14} style={{ display: "inline", verticalAlign: "text-bottom", marginLeft: "8px", marginRight: "4px" }} /> {formData.mobileNumber}
                 </div>
               </div>
 

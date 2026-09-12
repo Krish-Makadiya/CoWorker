@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { Wrench, Construction } from 'lucide-react';
 import './Dashboard.css';
 
 export default function WorkerDashboard() {
@@ -22,10 +23,10 @@ export default function WorkerDashboard() {
 
       <main className="dashboard-content">
         <div className="dashboard-placeholder">
-          <div className="dashboard-placeholder-icon">🔧</div>
+          <div className="dashboard-placeholder-icon"><Wrench size={48} /></div>
           <h1>Worker Dashboard</h1>
           <p>Welcome! Your dashboard is coming soon.</p>
-          <span className="dashboard-placeholder-badge">🚧 Under Construction</span>
+          <span className="dashboard-placeholder-badge"><Construction size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Under Construction</span>
         </div>
       </main>
     </div>

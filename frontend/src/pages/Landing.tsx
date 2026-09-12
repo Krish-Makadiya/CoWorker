@@ -10,7 +10,10 @@ import {
   ChevronRight,
   ChevronLeft,
   ShieldCheck,
-  Zap
+  Zap,
+  Wrench,
+  Landmark,
+  Trophy
 } from 'lucide-react';
 import './Landing.css';
 
@@ -407,9 +410,9 @@ export default function Landing() {
                   <div className="uc-card-body">
                     <h4 className="uc-service-name">{service.title}</h4>
                     <div className="uc-service-meta">
-                      <span className="uc-rating">★ {service.rating.toFixed(2)}</span>
+                      <span className="uc-rating"><Star size={12} fill="currentColor" style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '2px' }} /> {service.rating.toFixed(2)}</span>
                       {service.instant && (
-                        <span className="uc-instant-tag">⚡ Instant</span>
+                        <span className="uc-instant-tag"><Zap size={12} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '2px' }} /> Instant</span>
                       )}
                     </div>
                     <div className="uc-service-pricing">
@@ -479,7 +482,7 @@ export default function Landing() {
 
               <div className="uc-gig-roles-grid">
                 <div className="uc-gig-role-card" onClick={() => navigate('/register/customer')}>
-                  <div className="uc-role-icon customer">👤</div>
+                  <div className="uc-role-icon customer"><User size={24} /></div>
                   <h3>Customer</h3>
                   <p>Book verified door-step home services with guaranteed SLA & instant matching.</p>
                   <span className="uc-role-link">Book Services →</span>
@@ -487,14 +490,14 @@ export default function Landing() {
 
                 <div className="uc-gig-role-card highlight" onClick={() => navigate('/register/worker')}>
                   <div className="uc-role-badge">High Demand</div>
-                  <div className="uc-role-icon worker">🔧</div>
+                  <div className="uc-role-icon worker"><Wrench size={24} /></div>
                   <h3>Gig Worker</h3>
                   <p>Showcase skills, own portable reputation ratings, and secure fair payout guarantees.</p>
                   <span className="uc-role-link">Join as Worker →</span>
                 </div>
 
                 <div className="uc-gig-role-card" onClick={() => navigate('/register/cooperative')}>
-                  <div className="uc-role-icon union">🏛️</div>
+                  <div className="uc-role-icon union"><Landmark size={24} /></div>
                   <h3>Union / Federation</h3>
                   <p>Manage worker cooperatives, enforce wage standards, and arbitrate disputes.</p>
                   <span className="uc-role-link">Federation Portal →</span>
@@ -553,7 +556,7 @@ export default function Landing() {
                 Building a fair, transparent, and decentralized gig platform for the future of work.
               </p>
               <div className="uc-sih-badge">
-                <span>🏆 SIH 2026 Prototype</span>
+                <span><Trophy size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> SIH 2026 Prototype</span>
               </div>
             </div>
           </div>

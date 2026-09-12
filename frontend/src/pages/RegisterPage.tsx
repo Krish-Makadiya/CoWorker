@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { User, Wrench, Landmark, XCircle } from 'lucide-react';
 import CustomerRegisterForm from '../components/forms/CustomerRegisterForm';
 import WorkerRegisterForm from '../components/forms/WorkerRegisterForm';
 import CoopRegisterForm from '../components/forms/CoopRegisterForm';
@@ -6,24 +7,24 @@ import './Register.css';
 
 type RoleParam = 'customer' | 'worker' | 'cooperative';
 
-const roleConfig: Record<RoleParam, { label: string; title: string; subtitle: string; emoji: string }> = {
+const roleConfig: Record<RoleParam, { label: string; title: string; subtitle: string; icon: React.ReactNode }> = {
   customer: {
     label: 'User',
     title: 'Create User Account',
     subtitle: 'Find and hire skilled workers for your needs',
-    emoji: '👤',
+    icon: <User size={18} />,
   },
   worker: {
     label: 'Worker',
     title: 'Register as Worker',
     subtitle: 'Showcase your skills and start earning with gigs',
-    emoji: '🔧',
+    icon: <Wrench size={18} />,
   },
   cooperative: {
     label: 'Union / Cooperative',
     title: 'Register a Cooperative',
     subtitle: 'Manage your workers and represent your cooperative',
-    emoji: '🏛️',
+    icon: <Landmark size={18} />,
   },
 };
 
@@ -40,7 +41,7 @@ export default function RegisterPage() {
         <div className="register-content">
           <div className="register-card">
             <div className="register-success">
-              <div className="register-success-icon">❌</div>
+              <div className="register-success-icon"><XCircle size={48} color="var(--danger, #ef4444)" /></div>
               <h2>Invalid Role</h2>
               <p>The registration role "{role}" is not valid.</p>
               <Link to="/" className="btn btn-primary btn-lg">Back to Home</Link>
@@ -74,7 +75,7 @@ export default function RegisterPage() {
           {/* Card Header */}
           <div className="register-card-header">
             <div className="register-role-badge">
-              <span>{config.emoji}</span>
+              <span>{config.icon}</span>
               {config.label}
             </div>
             <h1>{config.title}</h1>

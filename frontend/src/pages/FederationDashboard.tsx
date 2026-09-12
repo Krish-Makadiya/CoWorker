@@ -15,7 +15,8 @@ import {
   Star,
   Search,
   Plus,
-  UserPlus
+  UserPlus,
+  X
 } from "lucide-react";
 import Navbar, { type CooperativeItem } from "../components/Navbar";
 import FederationOnboarding from "../components/FederationOnboarding";
@@ -326,7 +327,7 @@ export default function FederationDashboard() {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <CheckCircle2 size={17} /> {successMsg}
               </div>
-              <button onClick={() => setSuccessMsg("")} style={{ background: "none", border: "none", cursor: "pointer" }}>✕</button>
+              <button onClick={() => setSuccessMsg("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={16} /></button>
             </div>
           )}
 
@@ -347,7 +348,7 @@ export default function FederationDashboard() {
               }}
             >
               <div>{errorMsg}</div>
-              <button onClick={() => setErrorMsg("")} style={{ background: "none", border: "none", cursor: "pointer" }}>✕</button>
+              <button onClick={() => setErrorMsg("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={16} /></button>
             </div>
           )}
 
@@ -736,7 +737,7 @@ export default function FederationDashboard() {
                             {worker.userId?.name || "Worker Name"}
                           </h4>
                           <div style={{ fontSize: "0.8rem", color: "#5f6368" }}>
-                            ✉️ {worker.userId?.email} | 📞 {worker.userId?.mobileNumber}
+                            <Mail size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginRight: "3px" }} /> {worker.userId?.email} | <Phone size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginLeft: "6px", marginRight: "3px" }} /> {worker.userId?.mobileNumber}
                           </div>
                         </div>
                         <span
@@ -786,7 +787,7 @@ export default function FederationDashboard() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
                           <div>
                             <h4 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#1a2e1a" }}>{worker.userId?.name}</h4>
-                            <div style={{ fontSize: "0.8rem", color: "#5f6368" }}>✉️ {worker.userId?.email} | 📞 {worker.userId?.mobileNumber}</div>
+                            <div style={{ fontSize: "0.8rem", color: "#5f6368" }}><Mail size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginRight: "3px" }} /> {worker.userId?.email} | <Phone size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginLeft: "6px", marginRight: "3px" }} /> {worker.userId?.mobileNumber}</div>
                           </div>
                           <span style={{ background: "#fef7e0", color: "#b06000", padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 600 }}>Pending</span>
                         </div>
