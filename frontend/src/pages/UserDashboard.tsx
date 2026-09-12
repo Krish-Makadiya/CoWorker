@@ -274,11 +274,18 @@ export default function UserDashboard() {
     try {
       const formData = new FormData();
       Array.from(files).forEach((file) => {
-        formData.append('preServicePhotos', file);
+        formData.append('photos', file);
       });
+
+      const userId = localStorage.getItem('userId') || '';
+      const headers: Record<string, string> = {};
+      if (userId) {
+        headers['user-id'] = userId;
+      }
 
       const res = await fetch(`${ROUTES.serviceRequests}/${requestId}/pre-photos`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
