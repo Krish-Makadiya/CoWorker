@@ -152,22 +152,22 @@ export default function FederationDashboard() {
     setSuccessMsg("");
 
     try {
-      const response = await fetch(`http://localhost:8000/worker/${workerId}/status`, {
+      const response = await fetch(`http://localhost:8000/worker/${workerId}/verify`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           "user-id": typeof userId === "object" ? userId._id : userId
         },
-        body: JSON.stringify({ verification: newStatus })
+        body: JSON.stringify({ status: newStatus })
       });
 
       const data = await response.json();
 
       if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Failed to update status");
+        throw new Error(data.message || "Failed to update worker verification status");
       }
 
-      setSuccessMsg(`Worker status updated to '${newStatus}'`);
+      setSuccessMsg(data.message || `Worker verification status updated to '${newStatus}'`);
       fetchWorkers();
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to update worker verification status.");
@@ -747,18 +747,39 @@ export default function FederationDashboard() {
                             <Mail size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginRight: "3px" }} /> {worker.userId?.email} | <Phone size={13} style={{ display: "inline", verticalAlign: "text-bottom", marginLeft: "6px", marginRight: "3px" }} /> {worker.userId?.mobileNumber}
                           </div>
                         </div>
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                            background: worker.verification === "verified" ? "#e6f4ea" : worker.verification === "pending" ? "#fef7e0" : "#fce8e6",
-                            color: worker.verification === "verified" ? "#137333" : worker.verification === "pending" ? "#b06000" : "#c5221f"
-                          }}
-                        >
-                          {worker.verification}
-                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              background: worker.verification === "verified" ? "#e6f4ea" : worker.verification === "pending" ? "#fef7e0" : "#fce8e6",
+                              color: worker.verification === "verified" ? "#137333" : worker.verification === "pending" ? "#b06000" : "#c5221f"
+                            }}
+                          >
+                            {worker.verification}
+                          </span>
+                          <select
+                            value={worker.verification}
+                            onChange={(e) => handleUpdateStatus(worker._id, e.target.value)}
+                            title="Change verification status"
+                            style={{
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              border: "1px solid #dadce0",
+                              background: "#ffffff",
+                              color: "#3c4043",
+                              cursor: "pointer"
+                            }}
+                          >
+                            <option value="verified">verified</option>
+                            <option value="pending">pending</option>
+                            <option value="rejected">rejected</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div style={{ margin: "14px 0", fontSize: "0.85rem", display: "flex", flexDirection: "column", gap: "4px", color: "#3c4043" }}>
