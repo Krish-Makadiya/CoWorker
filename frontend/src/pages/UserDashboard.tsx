@@ -277,7 +277,7 @@ export default function UserDashboard() {
         formData.append('preServicePhotos', file);
       });
 
-      const res = await fetch(ROUTES.customer.uploadPrePhotos(requestId), {
+      const res = await fetch(`${ROUTES.serviceRequests}/${requestId}/pre-photos`, {
         method: 'POST',
         body: formData,
       });
@@ -305,6 +305,11 @@ export default function UserDashboard() {
     setActiveTab('new-request');
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/', { replace: true });
+  };
+
   return (
     <div className="dashboard-page">
       {/* Top Header Navigation */}
@@ -315,7 +320,7 @@ export default function UserDashboard() {
         </Link>
         <button
           className="dashboard-nav-logout"
-          onClick={() => navigate('/')}
+          onClick={handleLogout}
           aria-label="Logout"
         >
           ← Logout

@@ -5,6 +5,11 @@ import './Dashboard.css';
 export default function WorkerDashboard() {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/', { replace: true });
+  };
+
   return (
     <div className="dashboard-page">
       <nav className="dashboard-nav" aria-label="Worker dashboard navigation">
@@ -14,7 +19,7 @@ export default function WorkerDashboard() {
         </Link>
         <button
           className="dashboard-nav-logout"
-          onClick={() => navigate('/')}
+          onClick={handleLogout}
           aria-label="Logout"
         >
           ← Logout

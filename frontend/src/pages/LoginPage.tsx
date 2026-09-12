@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { User, Wrench, Landmark, XCircle, AlertTriangle } from 'lucide-react';
@@ -52,6 +52,25 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userJson = localStorage.getItem('user');
+    if (userId && userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        const userRoles: string[] = Array.isArray(user.roles) ? user.roles : [];
+        const primaryRole = userRoles[0] as RoleParam;
+        if (primaryRole && roleDashboardPath[primaryRole]) {
+          navigate(roleDashboardPath[primaryRole], { replace: true });
+          return;
+        }
+      } catch {}
+      if (validRole && roleDashboardPath[validRole]) {
+        navigate(roleDashboardPath[validRole], { replace: true });
+      }
+    }
+  }, [validRole, navigate]);
 
   if (!config) {
     return (
@@ -112,7 +131,12 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      navigate(roleDashboardPath[validRole], { replace: true });
+      // Determine target dashboard based on actual user roles returned from backend
+      const userRoles: string[] = Array.isArray(data.user?.roles) ? data.user.roles : [];
+      const primaryRole = (userRoles[0] as RoleParam) || validRole;
+      const targetDashboard = roleDashboardPath[primaryRole] || roleDashboardPath[validRole];
+
+      navigate(targetDashboard, { replace: true });
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

@@ -13,7 +13,8 @@ import {
   Zap,
   Wrench,
   Landmark,
-  Trophy
+  Trophy,
+  LogOut
 } from 'lucide-react';
 import './Landing.css';
 
@@ -143,6 +144,27 @@ export default function Landing() {
   const [activeTab, setActiveTab] = useState<'Homes' | 'Native' | 'Beauty' | 'Gig Portal'>('Homes');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return Boolean(localStorage.getItem('userId') || localStorage.getItem('user'));
+  });
+
+  const [userRole] = useState<string>(() => {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      try {
+        const u = JSON.parse(userJson);
+        if (u.roles && u.roles.length > 0) return u.roles[0];
+      } catch {}
+    }
+    return 'customer';
+  });
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    navigate('/', { replace: true });
+  };
+
   const handleScroll = (direction: 'left' | 'right') => {
     const container = document.getElementById('most-booked-slider');
     if (container) {
@@ -218,13 +240,33 @@ export default function Landing() {
             <button className="uc-icon-btn" title="Cart">
               <ShoppingCart size={20} />
             </button>
-            <button
-              className="uc-user-btn"
-              onClick={() => navigate('/login/customer')}
-            >
-              <User size={18} />
-              <span>Login</span>
-            </button>
+            {isLoggedIn ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  className="uc-user-btn"
+                  onClick={() => navigate(`/dashboard/${userRole}`)}
+                >
+                  <User size={18} />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  className="uc-user-btn"
+                  onClick={handleLogout}
+                  style={{ background: 'var(--danger, #ef4444)', borderColor: 'var(--danger, #ef4444)', color: '#ffffff' }}
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                className="uc-user-btn"
+                onClick={() => navigate('/login/customer')}
+              >
+                <User size={18} />
+                <span>Login</span>
+              </button>
+            )}
           </div>
         </div>
       </header>

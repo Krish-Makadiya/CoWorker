@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
 import WorkerDashboard from './pages/WorkerDashboard';
 import FederationDashboard from './pages/FederationDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (
@@ -20,9 +21,30 @@ export default function App() {
         <Route path="/login/:role" element={<LoginPage />} />
 
         {/* Dashboards */}
-        <Route path="/dashboard/customer" element={<UserDashboard />} />
-        <Route path="/dashboard/worker" element={<WorkerDashboard />} />
-        <Route path="/dashboard/cooperative" element={<FederationDashboard />} />
+        <Route
+          path="/dashboard/customer"
+          element={
+            <ProtectedRoute allowedRole="customer">
+              <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/worker"
+          element={
+            <ProtectedRoute allowedRole="worker">
+              <WorkerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/cooperative"
+          element={
+            <ProtectedRoute allowedRole="cooperative">
+              <FederationDashboard />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

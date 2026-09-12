@@ -1,4 +1,4 @@
-import { Building2, Plus, Server, ShieldCheck, RefreshCw } from "lucide-react";
+import { Building2, Plus, Server, ShieldCheck, RefreshCw, LogOut } from "lucide-react";
 
 export interface CooperativeItem {
   _id: string;
@@ -116,6 +116,19 @@ export default function Navbar({
             style={{ padding: "9px 18px", fontSize: "0.88rem" }}
           >
             <Plus size={16} /> Onboard Federation
+          </button>
+
+          {/* Logout Button */}
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = '/';
+            }}
+            className="btn btn-secondary"
+            style={{ padding: "9px 16px", fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "6px" }}
+            title="Logout"
+          >
+            <LogOut size={16} /> Logout
           </button>
 
         </div>

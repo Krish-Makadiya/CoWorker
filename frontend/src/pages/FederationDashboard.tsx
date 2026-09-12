@@ -64,11 +64,18 @@ export default function FederationDashboard() {
   const fetchCooperatives = async () => {
     setLoading(true);
     try {
+      const loggedUserId = localStorage.getItem("userId") || "";
       const response = await fetch("http://localhost:8000/cooperative");
       const data = await response.json();
       if (response.ok && data.success && data.cooperatives?.length > 0) {
         setCooperatives(data.cooperatives);
-        const activeId = selectedCoopId || data.cooperatives[0]._id;
+        const userCoop = loggedUserId
+          ? data.cooperatives.find((c: any) => {
+              const cUserId = typeof c.userId === "object" ? c.userId?._id : c.userId;
+              return cUserId === loggedUserId;
+            })
+          : null;
+        const activeId = selectedCoopId || (userCoop ? userCoop._id : data.cooperatives[0]._id);
         setSelectedCoopId(activeId);
         const current = data.cooperatives.find((c: any) => c._id === activeId) || data.cooperatives[0];
         setCooperative(current);
