@@ -20,6 +20,7 @@ import {
 import { toast } from "react-hot-toast";
 import Navbar, { type CooperativeItem } from "../components/Navbar";
 import FederationOnboarding from "../components/FederationOnboarding";
+import { API_BASE_URL } from "../config/api";
 
 export default function FederationDashboard() {
   const [cooperatives, setCooperatives] = useState<CooperativeItem[]>([]);
@@ -63,7 +64,7 @@ export default function FederationDashboard() {
     setLoading(true);
     try {
       const loggedUserId = localStorage.getItem("userId") || "";
-      const response = await fetch("http://localhost:8000/cooperative");
+      const response = await fetch(`${API_BASE_URL}/cooperative`);
       const data = await response.json();
       if (response.ok && data.success && data.cooperatives?.length > 0) {
         setCooperatives(data.cooperatives);
@@ -108,7 +109,7 @@ export default function FederationDashboard() {
     setLoadingWorkers(true);
 
     try {
-      const response = await fetch("http://localhost:8000/worker", {
+      const response = await fetch(`${API_BASE_URL}/worker`, {
         headers: {
           "user-id": typeof userId === "object" ? userId._id : userId
         }
@@ -146,7 +147,7 @@ export default function FederationDashboard() {
 
   const handleUpdateStatus = async (workerId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/worker/${workerId}/verify`, {
+      const response = await fetch(`${API_BASE_URL}/worker/${workerId}/verify`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +183,7 @@ export default function FederationDashboard() {
         }
       };
 
-      const response = await fetch("http://localhost:8000/cooperative/profile", {
+      const response = await fetch(`${API_BASE_URL}/cooperative/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +233,7 @@ export default function FederationDashboard() {
         verification: "verified"
       };
 
-      const response = await fetch("http://localhost:8000/worker/register-by-cooperative", {
+      const response = await fetch(`${API_BASE_URL}/worker/register-by-cooperative`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

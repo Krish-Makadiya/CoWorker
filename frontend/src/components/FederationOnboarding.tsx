@@ -13,6 +13,7 @@ import {
   Mail,
   Phone
 } from "lucide-react";
+import { API_BASE_URL } from "../config/api";
 import { toast } from "react-hot-toast";
 import type { CooperativeItem } from "./Navbar";
 
@@ -87,7 +88,7 @@ export default function FederationOnboarding({ onComplete, onCancel }: Federatio
         }
       };
 
-      const response = await fetch("http://localhost:8000/cooperative/register", {
+      const response = await fetch(`${API_BASE_URL}/cooperative/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
