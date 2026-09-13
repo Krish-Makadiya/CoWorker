@@ -1,7 +1,7 @@
 import React from "react";
 import type { ComponentType } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, Plus, Server, ShieldCheck, RefreshCw, LogOut } from "lucide-react";
+import { Building2, Plus, ShieldCheck, RefreshCw, LogOut } from "lucide-react";
 
 export interface CooperativeItem {
   _id: string;
@@ -19,7 +19,6 @@ export interface NavbarProps {
   portalName?: string;
   portalSubtitle?: string;
   portalIcon?: ComponentType<{ size?: number | string; color?: string; className?: string }>;
-  showDbBadge?: boolean;
 
   // Optional Federation-specific controls
   cooperatives?: CooperativeItem[];
@@ -40,7 +39,6 @@ export default function Navbar({
   portalName = "Dashboard",
   portalSubtitle,
   portalIcon: PortalIcon = Building2,
-  showDbBadge = true,
   cooperatives,
   selectedCoopId,
   onSelectCoop,
