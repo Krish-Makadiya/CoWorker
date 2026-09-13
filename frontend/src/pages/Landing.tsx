@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import {
   MapPin,
   Search,
@@ -14,7 +15,11 @@ import {
   Wrench,
   Landmark,
   Trophy,
-  LogOut
+  LogOut,
+  X,
+  Building2,
+  CheckCircle2,
+  Navigation
 } from 'lucide-react';
 import './Landing.css';
 
@@ -74,6 +79,7 @@ const mostBookedServices = [
     price: 918,
     originalPrice: 998,
     image: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=500&q=80',
+    category: 'Cleaning'
   },
   {
     id: 2,
@@ -83,6 +89,7 @@ const mostBookedServices = [
     price: 299,
     originalPrice: null,
     image: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=500&q=80',
+    category: 'Native RO'
   },
   {
     id: 3,
@@ -92,6 +99,7 @@ const mostBookedServices = [
     price: 1197,
     originalPrice: 1497,
     image: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=500&q=80',
+    category: 'Cleaning'
   },
   {
     id: 4,
@@ -101,6 +109,7 @@ const mostBookedServices = [
     price: 249,
     originalPrice: null,
     image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=500&q=80',
+    category: 'Appliance Repair'
   },
   {
     id: 5,
@@ -110,6 +119,7 @@ const mostBookedServices = [
     price: 399,
     originalPrice: null,
     image: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&w=500&q=80',
+    category: 'Cleaning'
   },
   {
     id: 6,
@@ -118,31 +128,51 @@ const mostBookedServices = [
     instant: true,
     price: 599,
     originalPrice: 799,
-    image: 'https://images.unsplash.com/photo-1590756254933-2873d72a83b6?auto=format&fit=crop&w=500&q=80',
-  }
+    image: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80',
+    category: 'Appliance Repair'
+  },
 ];
 
 // Appliance repair grid
 const applianceServices = [
-  { title: 'AC Repair & Service', image: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Washing Machine Repair', image: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Chimney Repair', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Refrigerator Repair', image: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Geyser Service & Repair', image: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=500&q=80' },
+  { title: 'AC Repair & Service', image: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80', category: 'Appliance' },
+  { title: 'Washing Machine Repair', image: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?auto=format&fit=crop&w=500&q=80', category: 'Appliance' },
+  { title: 'Chimney Repair', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=500&q=80', category: 'Appliance' },
+  { title: 'Refrigerator Repair', image: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=500&q=80', category: 'Appliance' },
+  { title: 'Geyser Service & Repair', image: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=500&q=80', category: 'Appliance' },
 ];
 
 // Cleaning & pest control grid
 const cleaningServices = [
-  { title: 'Full Home / By Room Cleaning', image: 'https://images.unsplash.com/photo-1527515545081-5db817172677?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Cockroach & Pest Control', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Sofa & Carpet Cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=500&q=80' },
-  { title: 'Disinfection & Sanitization', image: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=500&q=80' },
+  { title: 'Full Home / By Room Cleaning', image: 'https://images.unsplash.com/photo-1527515545081-5db817172677?auto=format&fit=crop&w=500&q=80', category: 'Cleaning' },
+  { title: 'Cockroach & Pest Control', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80', category: 'Cleaning' },
+  { title: 'Sofa & Carpet Cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=500&q=80', category: 'Cleaning' },
+  { title: 'Disinfection & Sanitization', image: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=500&q=80', category: 'Cleaning' },
 ];
+
+const popularCities = ['Delhi NCR', 'Mumbai', 'Bengaluru', 'Hyderabad', 'Pune', 'Kolkata', 'Chennai'];
 
 export default function Landing() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'Homes' | 'Native' | 'Beauty' | 'Gig Portal'>('Homes');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+  // Location selector state
+  const [selectedLocation, setSelectedLocation] = useState<string>(() => {
+    return localStorage.getItem('user_location') || 'Delhi NCR';
+  });
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Login menu & Cart drawer state
+  const [showLoginMenu, setShowLoginMenu] = useState(false);
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
+
+  // Dropdown container refs for clicking outside
+  const locationRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const loginRef = useRef<HTMLDivElement>(null);
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return Boolean(localStorage.getItem('userId') || localStorage.getItem('user'));
@@ -159,9 +189,54 @@ export default function Landing() {
     return 'customer';
   });
 
+  const [isRolesInView, setIsRolesInView] = useState(false);
+  const rolesRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+      if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
+        setShowLoginMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // IntersectionObserver for scroll-triggered blur reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsRolesInView(true);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    if (rolesRef.current) {
+      observer.observe(rolesRef.current);
+    }
+
+    return () => {
+      if (rolesRef.current) {
+        observer.unobserve(rolesRef.current);
+      }
+    };
+  }, []);
+
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
+    toast.success('Logged out successfully');
     navigate('/', { replace: true });
   };
 
@@ -173,6 +248,63 @@ export default function Landing() {
     }
   };
 
+  // Tab click handler with smooth section scrolling
+  const handleTabClick = (tab: 'Homes' | 'Native' | 'Beauty' | 'Gig Portal', targetId: string) => {
+    setActiveTab(tab);
+    const elem = document.getElementById(targetId);
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // GPS Auto location detection
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const locName = `GPS: ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`;
+        setSelectedLocation(locName);
+        localStorage.setItem('user_location', locName);
+        setIsLocating(false);
+        setShowLocationDropdown(false);
+        toast.success(`Location updated: ${locName}`);
+      },
+      () => {
+        toast.error('Could not retrieve GPS coordinates. Selected default location.');
+        setIsLocating(false);
+      }
+    );
+  };
+
+  const handleSelectCity = (city: string) => {
+    setSelectedLocation(city);
+    localStorage.setItem('user_location', city);
+    setShowLocationDropdown(false);
+    toast.success(`City set to ${city}`);
+  };
+
+  // Aggregate search results
+  const allServices = [
+    ...mostBookedServices.map((s) => ({ title: s.title, image: s.image, category: s.category, price: `₹${s.price}` })),
+    ...applianceServices.map((s) => ({ title: s.title, image: s.image, category: s.category, price: 'From ₹249' })),
+    ...cleaningServices.map((s) => ({ title: s.title, image: s.image, category: s.category, price: 'From ₹399' })),
+  ];
+
+  const searchResults = searchQuery.trim()
+    ? allServices.filter((s) => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
+
+  const handleSelectSearchResult = (title: string) => {
+    setShowSearchDropdown(false);
+    setSearchQuery('');
+    toast.success(`Opening ${title}...`);
+    navigate('/register/customer');
+  };
+
   return (
     <div className="uc-landing-page">
       {/* 1. Header Navigation Bar */}
@@ -180,8 +312,8 @@ export default function Landing() {
         <div className="uc-navbar-container">
           {/* Logo & Category Tabs */}
           <div className="uc-nav-left">
-            <div className="uc-brand-logo" onClick={() => navigate('/')}>
-              <span className="uc-brand-badge">UC</span>
+            <div className="uc-brand-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <span className="uc-brand-badge">CO</span>
               <div className="uc-brand-text">
                 <span className="uc-brand-name">CoWorker</span>
                 <span className="uc-brand-tag">GIG PLATFORM</span>
@@ -191,25 +323,25 @@ export default function Landing() {
             <nav className="uc-category-tabs">
               <button
                 className={`uc-tab-btn ${activeTab === 'Homes' ? 'active' : ''}`}
-                onClick={() => setActiveTab('Homes')}
+                onClick={() => handleTabClick('Homes', 'most-booked-section')}
               >
                 Homes
               </button>
               <button
                 className={`uc-tab-btn ${activeTab === 'Native' ? 'active' : ''}`}
-                onClick={() => setActiveTab('Native')}
+                onClick={() => handleTabClick('Native', 'appliance-repair-section')}
               >
                 Native
               </button>
               <button
                 className={`uc-tab-btn ${activeTab === 'Beauty' ? 'active' : ''}`}
-                onClick={() => setActiveTab('Beauty')}
+                onClick={() => handleTabClick('Beauty', 'cleaning-section')}
               >
                 Beauty
               </button>
               <button
                 className={`uc-tab-btn ${activeTab === 'Gig Portal' ? 'active' : ''}`}
-                onClick={() => setActiveTab('Gig Portal')}
+                onClick={() => handleTabClick('Gig Portal', 'gig-roles-section')}
               >
                 Federation & Gigs
               </button>
@@ -218,28 +350,101 @@ export default function Landing() {
 
           {/* Location Selector & Search Input */}
           <div className="uc-nav-center">
-            <div className="uc-location-selector">
-              <MapPin className="uc-loc-icon" size={16} />
-              <span className="uc-loc-text">Choose Location</span>
-              <span className="uc-loc-arrow">▾</span>
+            {/* Location Picker Dropdown */}
+            <div className="uc-dropdown-wrapper" ref={locationRef}>
+              <div
+                className="uc-location-selector"
+                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+              >
+                <MapPin className="uc-loc-icon" size={16} />
+                <span className="uc-loc-text">{selectedLocation}</span>
+                <span className="uc-loc-arrow">▾</span>
+              </div>
+
+              {showLocationDropdown && (
+                <div className="uc-location-dropdown">
+                  <div className="uc-location-header">Select Service Area</div>
+                  <button className="uc-gps-btn" onClick={handleDetectLocation} disabled={isLocating}>
+                    <Navigation size={14} className={isLocating ? "spin" : ""} />
+                    {isLocating ? "Detecting GPS..." : "Use Current GPS Location"}
+                  </button>
+                  <div className="uc-city-list">
+                    {popularCities.map((city) => (
+                      <div
+                        key={city}
+                        className={`uc-city-item ${selectedLocation === city ? "active" : ""}`}
+                        onClick={() => handleSelectCity(city)}
+                      >
+                        <span>{city}</span>
+                        {selectedLocation === city && <CheckCircle2 size={14} color="var(--uc-primary)" />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="uc-search-bar">
-              <Search className="uc-search-icon" size={18} />
-              <input
-                type="text"
-                placeholder="Search for 'AC repair', 'Electrician', 'Cleaning'..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            {/* Interactive Search Bar */}
+            <div className="uc-search-wrapper" ref={searchRef}>
+              <div className="uc-search-bar">
+                <Search className="uc-search-icon" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search for 'AC repair', 'Electrician', 'Cleaning'..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchDropdown(true);
+                  }}
+                  onFocus={() => setShowSearchDropdown(true)}
+                />
+                {searchQuery && (
+                  <X
+                    size={16}
+                    style={{ cursor: "pointer", color: "var(--uc-medium-gray)" }}
+                    onClick={() => setSearchQuery("")}
+                  />
+                )}
+              </div>
+
+              {/* Search Suggestions Dropdown */}
+              {showSearchDropdown && searchQuery.trim() !== '' && (
+                <div className="uc-search-dropdown">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="uc-search-item"
+                        onClick={() => handleSelectSearchResult(item.title)}
+                      >
+                        <img src={item.image} alt={item.title} className="uc-search-item-img" />
+                        <div className="uc-search-item-info">
+                          <div className="uc-search-item-title">{item.title}</div>
+                          <div className="uc-search-item-meta">{item.category} · {item.price}</div>
+                        </div>
+                        <ChevronRight size={16} color="var(--uc-medium-gray)" />
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: "16px", textTransform: "none", fontSize: "0.88rem", color: "var(--uc-medium-gray)", textAlign: "center" }}>
+                      No matching services found for "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Utility Action Buttons */}
           <div className="uc-nav-right">
-            <button className="uc-icon-btn" title="Cart">
+            <button
+              className="uc-icon-btn"
+              title="View Cart"
+              onClick={() => setShowCartDrawer(true)}
+            >
               <ShoppingCart size={20} />
             </button>
+
             {isLoggedIn ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
@@ -259,17 +464,82 @@ export default function Landing() {
                 </button>
               </div>
             ) : (
-              <button
-                className="uc-user-btn"
-                onClick={() => navigate('/login/customer')}
-              >
-                <User size={18} />
-                <span>Login</span>
-              </button>
+              <div className="uc-login-menu-wrapper" ref={loginRef}>
+                <button
+                  className="uc-user-btn"
+                  onClick={() => setShowLoginMenu(!showLoginMenu)}
+                >
+                  <User size={18} />
+                  <span>Login ▾</span>
+                </button>
+
+                {showLoginMenu && (
+                  <div className="uc-login-menu">
+                    <button
+                      className="uc-login-role-btn"
+                      onClick={() => {
+                        setShowLoginMenu(false);
+                        navigate('/login/customer');
+                      }}
+                    >
+                      <User size={16} color="var(--uc-primary)" />
+                      <span>Customer Login</span>
+                    </button>
+                    <button
+                      className="uc-login-role-btn"
+                      onClick={() => {
+                        setShowLoginMenu(false);
+                        navigate('/login/worker');
+                      }}
+                    >
+                      <Wrench size={16} color="var(--uc-primary)" />
+                      <span>Gig Worker Login</span>
+                    </button>
+                    <button
+                      className="uc-login-role-btn"
+                      onClick={() => {
+                        setShowLoginMenu(false);
+                        navigate('/login/cooperative');
+                      }}
+                    >
+                      <Building2 size={16} color="var(--uc-primary)" />
+                      <span>Union / Federation Login</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
       </header>
+
+      {/* Cart Drawer */}
+      {showCartDrawer && (
+        <div className="uc-cart-modal-backdrop" onClick={() => setShowCartDrawer(false)}>
+          <div className="uc-cart-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="uc-cart-drawer-header">
+              <h3>Your Service Cart</h3>
+              <button className="uc-close-btn" onClick={() => setShowCartDrawer(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", color: "var(--uc-medium-gray)" }}>
+              <ShoppingCart size={48} style={{ opacity: 0.4, marginBottom: "12px" }} />
+              <h4 style={{ fontWeight: 700, color: "var(--uc-black)", marginBottom: "6px" }}>Your cart is empty</h4>
+              <p style={{ fontSize: "0.88rem", marginBottom: "20px" }}>Browse our instant doorstep services to add bookings.</p>
+              <button
+                className="uc-banner-btn"
+                onClick={() => {
+                  setShowCartDrawer(false);
+                  navigate('/register/customer');
+                }}
+              >
+                Book Instant Service
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="uc-main-content">
@@ -429,7 +699,7 @@ export default function Landing() {
         </section>
 
         {/* 4. Most Booked Services Slider */}
-        <section className="uc-section">
+        <section className="uc-section" id="most-booked-section">
           <div className="uc-container">
             <div className="uc-section-header">
               <h2 className="uc-section-title">Most booked services</h2>
@@ -471,7 +741,7 @@ export default function Landing() {
         </section>
 
         {/* 5. Appliance Repair & Service Section */}
-        <section className="uc-section gray-bg">
+        <section className="uc-section gray-bg" id="appliance-repair-section">
           <div className="uc-container">
             <div className="uc-section-header">
               <h2 className="uc-section-title">Appliance repair & service</h2>
@@ -492,7 +762,7 @@ export default function Landing() {
         </section>
 
         {/* 6. Cleaning & Pest Control Section */}
-        <section className="uc-section">
+        <section className="uc-section" id="cleaning-section">
           <div className="uc-container">
             <div className="uc-section-header">
               <h2 className="uc-section-title">Cleaning & pest control</h2>
@@ -513,24 +783,24 @@ export default function Landing() {
         </section>
 
         {/* 7. SIH 2026 Unified Gig Network Roles Portal */}
-        <section className="uc-section gig-roles-section">
+        <section className="uc-section gig-roles-section" id="gig-roles-section" ref={rolesRef}>
           <div className="uc-container">
-            <div className="uc-gig-banner">
+            <div className={`uc-gig-banner ${isRolesInView ? 'in-view' : ''}`}>
               <div className="uc-gig-banner-content">
                 <span className="uc-gig-badge">SIH 2026 · Unified Gig Ecosystem</span>
                 <h2>Empowering Workers, Customers & Cooperatives</h2>
                 <p>Pick your portal to participate in India's next-generation fair-pay gig economy platform.</p>
               </div>
 
-              <div className="uc-gig-roles-grid">
-                <div className="uc-gig-role-card" onClick={() => navigate('/register/customer')}>
+              <div className={`uc-gig-roles-grid ${isRolesInView ? 'in-view' : ''}`}>
+                <div className="uc-gig-role-card role-card-1" onClick={() => navigate('/register/customer')}>
                   <div className="uc-role-icon customer"><User size={24} /></div>
                   <h3>Customer</h3>
                   <p>Book verified door-step home services with guaranteed SLA & instant matching.</p>
                   <span className="uc-role-link">Book Services →</span>
                 </div>
 
-                <div className="uc-gig-role-card highlight" onClick={() => navigate('/register/worker')}>
+                <div className="uc-gig-role-card highlight role-card-2" onClick={() => navigate('/register/worker')}>
                   <div className="uc-role-badge">High Demand</div>
                   <div className="uc-role-icon worker"><Wrench size={24} /></div>
                   <h3>Gig Worker</h3>
@@ -538,7 +808,7 @@ export default function Landing() {
                   <span className="uc-role-link">Join as Worker →</span>
                 </div>
 
-                <div className="uc-gig-role-card" onClick={() => navigate('/register/cooperative')}>
+                <div className="uc-gig-role-card role-card-3" onClick={() => navigate('/register/cooperative')}>
                   <div className="uc-role-icon union"><Landmark size={24} /></div>
                   <h3>Union / Federation</h3>
                   <p>Manage worker cooperatives, enforce wage standards, and arbitrate disputes.</p>
@@ -575,7 +845,7 @@ export default function Landing() {
             <div className="uc-footer-col">
               <h4>For customers</h4>
               <ul>
-                <li><a href="#reviews">UC reviews</a></li>
+                <li><a href="#reviews">CO reviews</a></li>
                 <li><a href="#categories">Categories near you</a></li>
                 <li><a href="#safety">Safety policy</a></li>
                 <li><a href="#contact">Customer support</a></li>

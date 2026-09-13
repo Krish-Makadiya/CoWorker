@@ -1,5 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Wrench, Construction } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import './Dashboard.css';
 
 export default function WorkerDashboard() {
@@ -12,19 +13,11 @@ export default function WorkerDashboard() {
 
   return (
     <div className="dashboard-page">
-      <nav className="dashboard-nav" aria-label="Worker dashboard navigation">
-        <Link to="/" className="dashboard-nav-brand">
-          <span className="dashboard-nav-brand-dot" />
-          GIG Platform
-        </Link>
-        <button
-          className="dashboard-nav-logout"
-          onClick={handleLogout}
-          aria-label="Logout"
-        >
-          ← Logout
-        </button>
-      </nav>
+      <Navbar
+        portalName="Worker Portal"
+        portalIcon={Wrench}
+        onLogout={handleLogout}
+      />
 
       <main className="dashboard-content">
         <div className="dashboard-placeholder">

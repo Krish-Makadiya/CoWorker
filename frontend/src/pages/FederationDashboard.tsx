@@ -284,6 +284,8 @@ export default function FederationDashboard() {
   return (
     <div style={{ minHeight: "100vh", background: "#f8faf7" }}>
       <Navbar
+        portalName="Federation & Cooperative Portal"
+        portalIcon={Building2}
         cooperatives={cooperatives}
         selectedCoopId={selectedCoopId}
         onSelectCoop={handleSelectCoop}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ClipboardList,
   Plus,
@@ -11,9 +11,11 @@ import {
   HardHat,
   Camera,
   Loader2,
-  Rocket
+  Rocket,
+  User
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Navbar from '../components/Navbar';
 import { ROUTES } from '../config/api';
 import './Dashboard.css';
 
@@ -316,19 +318,11 @@ export default function UserDashboard() {
   return (
     <div className="dashboard-page">
       {/* Top Header Navigation */}
-      <nav className="dashboard-nav" aria-label="User dashboard navigation">
-        <Link to="/" className="dashboard-nav-brand">
-          <span className="dashboard-nav-brand-dot" />
-          GIG Platform · Customer Portal
-        </Link>
-        <button
-          className="dashboard-nav-logout"
-          onClick={handleLogout}
-          aria-label="Logout"
-        >
-          ← Logout
-        </button>
-      </nav>
+      <Navbar
+        portalName="Customer Portal"
+        portalIcon={User}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content Area */}
       <main className="dashboard-container">

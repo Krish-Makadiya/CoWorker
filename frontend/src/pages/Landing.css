@@ -937,22 +937,33 @@
    ========================================================================== */
 
 .gig-roles-section {
-  background: linear-gradient(135deg, #182315 0%, #293B24 100%);
+  background-color: #131c11;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(135deg, #131c11 0%, #21321d 100%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
   color: #FFFFFF;
   border-radius: 24px;
   margin: 2rem 1.5rem;
   box-shadow: 0 12px 35px rgba(24, 35, 21, 0.3);
   border: 1px solid #3E5437;
+  position: relative;
+  overflow: hidden;
 }
 
 .uc-gig-banner {
-  padding: 2.5rem 1.5rem;
+  padding: 3.5rem 2rem;
+  position: relative;
+  background: transparent;
 }
 
 .uc-gig-banner-content {
   text-align: center;
   max-width: 640px;
   margin: 0 auto 2.5rem;
+  position: relative;
+  z-index: 2;
 }
 
 .uc-gig-badge {
@@ -987,6 +998,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+  position: relative;
+  z-index: 2;
 }
 
 .uc-gig-role-card {
@@ -995,18 +1008,47 @@
   border-radius: var(--uc-radius-lg);
   padding: 1.75rem;
   cursor: pointer;
-  transition: all 0.25s ease;
   position: relative;
   display: flex;
   flex-direction: column;
   backdrop-filter: blur(8px);
+
+  /* Initial Blur & Offset state before scrolling into view */
+  filter: blur(14px);
+  opacity: 0.15;
+  transform: translateY(40px) scale(0.94);
+  transition: filter 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.85s ease,
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s ease,
+              border-color 0.4s ease !important;
+}
+
+/* Revealed crisp focus state on scroll */
+.uc-gig-banner.in-view .uc-gig-role-card,
+.uc-gig-roles-grid.in-view .uc-gig-role-card {
+  filter: blur(0px);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.uc-gig-roles-grid.in-view .role-card-1 {
+  transition-delay: 0.1s;
+}
+
+.uc-gig-roles-grid.in-view .role-card-2 {
+  transition-delay: 0.28s;
+}
+
+.uc-gig-roles-grid.in-view .role-card-3 {
+  transition-delay: 0.46s;
 }
 
 .uc-gig-role-card:hover {
-  border-color: #86EFAC;
+  border-color: #86EFAC !important;
   background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-8px) scale(1.02) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
 }
 
 .uc-gig-role-card.highlight {
@@ -1186,4 +1228,461 @@
   .uc-hero-title {
     font-size: 2rem;
   }
+}
+
+/* ==========================================================================
+   Navbar Interactive Dropdowns & Modals
+   ========================================================================== */
+
+/* Location Dropdown */
+.uc-dropdown-wrapper {
+  position: relative;
+}
+
+.uc-location-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid var(--uc-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  z-index: 1050;
+}
+
+.uc-location-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--uc-medium-gray);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--uc-border);
+}
+
+.uc-gps-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--uc-emerald-bg);
+  color: var(--uc-emerald-text);
+  border: 1px solid var(--uc-emerald-border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.uc-gps-btn:hover {
+  background: #d4edd9;
+}
+
+.uc-city-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.uc-city-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  color: var(--uc-black);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.uc-city-item:hover {
+  background: var(--uc-light-gray);
+  color: var(--uc-primary);
+}
+
+.uc-city-item.active {
+  background: var(--uc-primary-tint);
+  color: var(--uc-primary);
+  font-weight: 700;
+}
+
+/* Search Results Dropdown */
+.uc-search-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.uc-search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--uc-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 1050;
+  padding: 8px 0;
+}
+
+.uc-search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f5f7f4;
+}
+
+.uc-search-item:last-child {
+  border-bottom: none;
+}
+
+.uc-search-item:hover {
+  background: #f9faf8;
+}
+
+.uc-search-item-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.uc-search-item-info {
+  flex: 1;
+}
+
+.uc-search-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--uc-black);
+}
+
+.uc-search-item-meta {
+  font-size: 0.75rem;
+  color: var(--uc-medium-gray);
+}
+
+/* Login Role Dropdown */
+.uc-login-menu-wrapper {
+  position: relative;
+}
+
+.uc-login-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background: #ffffff;
+  border: 1px solid var(--uc-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uc-login-role-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--uc-black);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.uc-login-role-btn:hover {
+  background: var(--uc-primary-tint);
+  color: var(--uc-primary);
+}
+
+/* Cart Modal / Drawer overlay */
+.uc-cart-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.uc-cart-drawer {
+  width: 360px;
+  max-width: 100%;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.uc-cart-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--uc-border);
+  margin-bottom: 20px;
+}
+
+.uc-cart-drawer-header h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.uc-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--uc-medium-gray);
+  padding: 4px;
+}
+
+.uc-close-btn:hover {
+  color: var(--uc-black);
+}
+
+/* ==========================================================================
+   Animations, Keyframes & Visual Polish
+   ========================================================================== */
+
+/* Keyframe Definitions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mergeFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-140px) scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(12px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes mergeFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(140px) scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-12px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(78, 99, 64, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(78, 99, 64, 0);
+  }
+}
+
+/* Animations applied to components */
+.uc-hero-left {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.uc-hero-right {
+  animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+/* Hero Collage Merge Entrance on Page Refresh */
+.uc-collage-card.card-ac,
+.uc-collage-card.card-electrician {
+  animation: mergeFromLeft 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.uc-collage-card.card-bathroom,
+.uc-collage-card.card-painter {
+  animation: mergeFromRight 1.05s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards;
+}
+
+.uc-collage-card {
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease !important;
+}
+
+.uc-collage-card:hover {
+  transform: translateY(-6px) scale(1.03) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18) !important;
+  z-index: 10;
+}
+
+/* Category Grid Item Hover */
+.uc-category-item {
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease !important;
+}
+
+.uc-category-item:hover {
+  transform: translateY(-6px) scale(1.03);
+  border-color: var(--uc-primary) !important;
+  box-shadow: 0 12px 24px rgba(78, 99, 64, 0.16);
+}
+
+.uc-category-item:hover .uc-cat-img {
+  transform: scale(1.1);
+}
+
+.uc-cat-img {
+  transition: transform 0.4s ease;
+}
+
+/* Service Card Lift & Image Zoom */
+.uc-service-card {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease !important;
+}
+
+.uc-service-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.12) !important;
+  border-color: var(--uc-primary);
+}
+
+.uc-card-img-wrap {
+  overflow: hidden;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.uc-card-img-wrap img {
+  transition: transform 0.5s ease;
+}
+
+.uc-service-card:hover .uc-card-img-wrap img {
+  transform: scale(1.08);
+}
+
+/* Appliance & Cleaning Cards Hover */
+.uc-appliance-card,
+.uc-cleaning-card {
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease, border-color 0.35s ease !important;
+}
+
+.uc-appliance-card:hover,
+.uc-cleaning-card:hover {
+  transform: translateY(-7px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(78, 99, 64, 0.14) !important;
+  border-color: var(--uc-primary);
+}
+
+.uc-appliance-card:hover img,
+.uc-cleaning-card:hover img {
+  transform: scale(1.09);
+}
+
+.uc-appliance-img img,
+.uc-cleaning-img img {
+  transition: transform 0.5s ease;
+}
+
+/* Promotional Banner Animations */
+.uc-promo-banner {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease !important;
+  overflow: hidden;
+}
+
+.uc-promo-banner:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16);
+}
+
+.uc-promo-banner img {
+  transition: transform 0.5s ease;
+}
+
+.uc-promo-banner:hover img {
+  transform: scale(1.08) rotate(1deg);
+}
+
+.uc-banner-btn {
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.uc-banner-btn:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Gig Role Cards Polish */
+.uc-gig-role-card {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease !important;
+}
+
+.uc-gig-role-card:hover {
+  transform: translateY(-10px) scale(1.025);
+  box-shadow: 0 22px 45px rgba(78, 99, 64, 0.22) !important;
+  border-color: var(--uc-primary) !important;
+}
+
+.uc-role-link {
+  transition: transform 0.25s ease, color 0.25s ease !important;
+  display: inline-block;
+}
+
+.uc-gig-role-card:hover .uc-role-link {
+  transform: translateX(6px);
+  color: var(--uc-primary);
+}
+
+/* Trust Bar Pulsing Pulse */
+.uc-live-pulse {
+  animation: pulseGlow 2.2s infinite ease-in-out;
+}
+
+/* Button Active Micro Press */
+button:active {
+  transform: scale(0.96) !important;
+}
+
+.uc-tab-btn {
+  transition: color 0.25s ease, transform 0.2s ease !important;
+}
+
+.uc-tab-btn:hover {
+  transform: translateY(-1px);
 }
