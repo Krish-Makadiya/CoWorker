@@ -93,13 +93,6 @@ export default function Navbar({
         {/* Action Controls & Badges */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           
-          {/* Live DB Connection Badge */}
-          {showDbBadge && (
-            <div className="badge badge-emerald" style={{ padding: "6px 14px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Server size={13} /> MongoDB Connected (sih_2026)
-            </div>
-          )}
-
           {/* Refresh button */}
           {onRefresh && (
             <button
@@ -134,7 +127,7 @@ export default function Navbar({
                   color: "var(--text-main, #1b2418)"
                 }}
               >
-                <optgroup label="MongoDB Federations">
+                <optgroup label="Federations">
                   {cooperatives.map((c) => (
                     <option key={c._id} value={c._id}>
                       {c.name} ({c.address?.city || "Registered"})
