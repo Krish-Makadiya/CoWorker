@@ -8,11 +8,17 @@ import {
   verifyWorker,
   registerWorkerByCooperative,
   getWorkerById,
+  getWorkerPublicProfile,
 } from "../controllers/worker.controller.js";
 import {
   authenticateUser,
   requireRole,
 } from "../middlewares/auth.middleware.js";
+
+import {
+  getWorkerOngoingServices,
+  getWorkerPreviousServices,
+} from "../controllers/serviceRequest.controller.js";
 
 const router = Router();
 
@@ -27,9 +33,39 @@ router
     registerWorkerByCooperative
   );
 router
+  .route("/:id/ongoing")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerOngoingServices
+  );
+router
+  .route("/:id/ongoing-services")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerOngoingServices
+  );
+router
+  .route("/:id/previous")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerPreviousServices
+  );
+router
+  .route("/:id/previous-services")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerPreviousServices
+  );
+router.route("/:id/public").get(getWorkerPublicProfile);
+router.route("/public/:id").get(getWorkerPublicProfile);
+router
   .route("/:id")
   .get(authenticateUser, requireRole("worker", "cooperative"), getWorkerById)
-  .put(authenticateUser, requireRole("cooperative"), updateWorker)
+  .put(authenticateUser, requireRole("worker", "cooperative"), updateWorker)
   .delete(authenticateUser, requireRole("cooperative"), deleteWorker);
 router
   .route("/:id/verify")

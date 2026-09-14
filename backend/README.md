@@ -275,6 +275,28 @@ List all cooperatives.
 
 ---
 
+#### `GET /cooperative/names`
+
+Get all cooperatives ID (`_id`) and name (`name`) without authentication.
+
+🔓 **Public** — no authentication required.
+
+**Response `200`**
+
+```json
+{
+  "success": true,
+  "cooperatives": [
+    {
+      "_id": "ObjectId",
+      "name": "string"
+    }
+  ]
+}
+```
+
+---
+
 ### Worker
 
 #### `POST /worker/register`
@@ -363,7 +385,7 @@ List workers belonging to the authenticated cooperative.
 
 #### `GET /worker/:id`
 
-Get worker details by ID.
+Get worker details by Worker `_id` or User `userId`.
 
 🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
 
@@ -371,9 +393,9 @@ Get worker details by ID.
 
 **URL Parameters**
 
-| Param | Type     | Description             |
-| ----- | -------- | ----------------------- |
-| `id`  | ObjectId | The `_id` of the Worker |
+| Param | Type     | Description                                      |
+| ----- | -------- | ------------------------------------------------ |
+| `id`  | ObjectId | The `_id` of the Worker or the Worker's `userId` |
 
 **Response `200`**
 
@@ -425,9 +447,23 @@ Register a worker directly under the authenticated cooperative (automatically ve
 
 #### `PUT /worker/:id`
 
-Update a worker belonging to the authenticated cooperative.
+Update worker details or select/join a cooperative.
 
-🔒 **Protected** — requires `user-id` header + `cooperative` role.
+🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
+
+> **Access Control**: A Worker can ONLY update their own profile / join a cooperative (`cooperativeId`). A Cooperative can ONLY update workers registered under their cooperative.
+
+**Request Body (Optional fields)**
+
+```json
+{
+  "skills": ["string"],
+  "experience": 0,
+  "certifications": ["string"],
+  "address": "string",
+  "cooperativeId": "ObjectId | null"
+}
+```
 
 ---
 
@@ -561,6 +597,58 @@ Get all open service requests available for workers.
 {
   "success": true,
   "serviceRequests": [/* Array of open ServiceRequest objects */]
+}
+```
+
+---
+
+#### `GET /api/service-requests/worker/:id/ongoing`
+
+Get currently ongoing service requests (`accepted`, `in_progress`) for a worker by Worker `_id` or User `userId`.
+
+🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
+
+> **Access Control**: A Worker can view their own ongoing services. A Cooperative can view ongoing services of workers under their cooperative.
+
+**URL Parameters**
+
+| Param | Type     | Description                                      |
+| ----- | -------- | ------------------------------------------------ |
+| `id`  | ObjectId | The `_id` of the Worker or the Worker's `userId` |
+
+**Response `200`**
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "ongoingServices": [/* Array of ongoing ServiceRequest objects */]
+}
+```
+
+---
+
+#### `GET /api/service-requests/worker/:id/previous`
+
+Get past/previous service requests (`completed`, `cancelled`) for a worker by Worker `_id` or User `userId`.
+
+🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
+
+> **Access Control**: A Worker can view their own previous services. A Cooperative can view previous services of workers under their cooperative.
+
+**URL Parameters**
+
+| Param | Type     | Description                                      |
+| ----- | -------- | ------------------------------------------------ |
+| `id`  | ObjectId | The `_id` of the Worker or the Worker's `userId` |
+
+**Response `200`**
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "previousServices": [/* Array of completed/cancelled ServiceRequest objects */]
 }
 ```
 
@@ -737,10 +825,11 @@ All errors follow this format:
 | -------- | --------------------------------------- | -------------------- | ------------------------------------------------- |
 | `GET`    | `/health`                               | Public               | Health check                                      |
 | `GET`    | `/cooperative/`                         | Public               | List all cooperatives                             |
+| `GET`    | `/cooperative/names`                    | Public               | Get all cooperative IDs and names                 |
 | `POST`   | `/cooperative/register`                 | Public               | Register a cooperative                            |
 | `POST`   | `/cooperative/login`                    | Public               | Login as cooperative                              |
 | `GET`    | `/worker/`                              | Cooperative          | List cooperative's workers 🔒                     |
-| `GET`    | `/worker/:id`                           | Worker / Cooperative | Get worker details (owner/coop only) 🔒           |
+| `GET`    | `/worker/:id`                           | Worker / Cooperative | Get worker details by worker ID or user ID (owner/coop only) 🔒 |
 | `POST`   | `/worker/register`                      | Public               | Register a worker                                 |
 | `POST`   | `/worker/login`                         | Public               | Login as worker                                   |
 | `PUT`    | `/worker/:id`                           | Cooperative          | Update a worker 🔒                                |
@@ -752,6 +841,8 @@ All errors follow this format:
 | `POST`   | `/api/service-requests/`                | Customer             | Create service request 🔒                         |
 | `GET`    | `/api/service-requests/my`              | Customer             | Get customer's requests 🔒                        |
 | `GET`    | `/api/service-requests/available`       | Worker               | Get open requests available for workers 🔒        |
+| `GET`    | `/api/service-requests/worker/:id/ongoing` | Worker / Cooperative | Get ongoing services by worker ID or user ID 🔒   |
+| `GET`    | `/api/service-requests/worker/:id/previous` | Worker / Cooperative | Get previous services by worker ID or user ID 🔒  |
 | `GET`    | `/api/service-requests/:id`             | Customer / Worker    | Get request details (owner or assigned worker) 🔒 |
 | `POST`   | `/api/service-requests/:id/pre-photos`  | Customer             | Upload before-service photos 🔒                   |
 | `POST`   | `/api/service-requests/:id/post-photos` | Worker               | Upload after-service photos 🔒                    |

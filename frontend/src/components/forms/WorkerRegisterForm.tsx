@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -21,6 +21,11 @@ interface FormErrors {
   [key: string]: string;
 }
 
+interface CooperativeOption {
+  _id: string;
+  name: string;
+}
+
 export default function WorkerRegisterForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<WorkerFormData>({
@@ -34,8 +39,30 @@ export default function WorkerRegisterForm() {
     experience: '',
     certifications: [],
   });
+  const [cooperatives, setCooperatives] = useState<CooperativeOption[]>([]);
+  const [selectedCooperativeId, setSelectedCooperativeId] = useState<string>('');
+  const [loadingCooperatives, setLoadingCooperatives] = useState<boolean>(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCooperatives = async () => {
+      setLoadingCooperatives(true);
+      try {
+        const res = await fetch(ROUTES.cooperative.names);
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.cooperatives)) {
+          setCooperatives(data.cooperatives);
+        }
+      } catch (err) {
+        console.error('Failed to fetch cooperatives:', err);
+      } finally {
+        setLoadingCooperatives(false);
+      }
+    };
+
+    fetchCooperatives();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,7 +100,7 @@ export default function WorkerRegisterForm() {
       skills: formData.skills,
       experience: formData.experience !== '' ? Number(formData.experience) : undefined,
       certifications: formData.certifications,
-      cooperativeId: null,
+      cooperativeId: selectedCooperativeId ? selectedCooperativeId : null,
     };
 
     try {
@@ -256,6 +283,32 @@ export default function WorkerRegisterForm() {
             placeholder="e.g. NSDC, ITI — press Enter to add"
           />
           <span className="form-hint">Press Enter or comma to add a certification</span>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="wkr-cooperative">
+            Cooperative / Union Affiliation (Optional)
+          </label>
+          <select
+            id="wkr-cooperative"
+            name="cooperativeId"
+            className="form-input"
+            value={selectedCooperativeId}
+            onChange={(e) => setSelectedCooperativeId(e.target.value)}
+            disabled={loadingCooperatives}
+          >
+            <option value="">
+              {loadingCooperatives ? 'Loading cooperatives...' : '-- None (Independent Worker) --'}
+            </option>
+            {cooperatives.map((coop) => (
+              <option key={coop._id} value={coop._id}>
+                {coop.name}
+              </option>
+            ))}
+          </select>
+          <span className="form-hint">
+            Select a cooperative to register under their union, or leave blank to register independently.
+          </span>
         </div>
 
         {/* Submit */}

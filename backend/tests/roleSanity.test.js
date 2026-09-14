@@ -91,21 +91,54 @@ beforeAll(() => {
   Worker.find = jest.fn(() => createMockChain([]));
   Worker.findOneAndDelete = jest.fn(async () => null);
 
-  Worker.findOne = jest.fn(async (query) => {
-    if (query.userId?.toString() === MOCK_IDS.worker) {
-      return {
-        _id: new mongoose.Types.ObjectId(MOCK_IDS.targetWorker),
-        userId: new mongoose.Types.ObjectId(MOCK_IDS.worker),
-      };
+  Worker.findOne = jest.fn((query) => {
+    let result = null;
+    const targetWorkerObj = {
+      _id: new mongoose.Types.ObjectId(MOCK_IDS.targetWorker),
+      userId: new mongoose.Types.ObjectId(MOCK_IDS.worker),
+      cooperativeId: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a99"),
+      skills: ["plumbing"],
+      verification: "verified",
+      save: jest.fn(async () => {}),
+      populate: jest.fn(async () => targetWorkerObj),
+    };
+    const otherWorkerObj = {
+      _id: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a88"),
+      userId: new mongoose.Types.ObjectId(MOCK_IDS.otherWorker),
+      verification: "verified",
+      save: jest.fn(async () => {}),
+      populate: jest.fn(async () => otherWorkerObj),
+    };
+
+    if (query && query.$or) {
+      const match = query.$or.some(
+        (cond) =>
+          cond._id?.toString() === MOCK_IDS.targetWorker ||
+          cond.userId?.toString() === MOCK_IDS.targetWorker ||
+          cond.userId?.toString() === MOCK_IDS.worker
+      );
+      if (match) {
+        result = targetWorkerObj;
+      }
+    } else if (query?.userId?.toString() === MOCK_IDS.worker) {
+      result = targetWorkerObj;
+    } else if (query?.userId?.toString() === MOCK_IDS.otherWorker) {
+      result = otherWorkerObj;
+    } else if (query?._id?.toString() === MOCK_IDS.targetWorker) {
+      result = targetWorkerObj;
     }
-    if (query.userId?.toString() === MOCK_IDS.otherWorker) {
-      return {
-        _id: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a88"),
-        userId: new mongoose.Types.ObjectId(MOCK_IDS.otherWorker),
-      };
-    }
-    return null;
+
+    const chain = {
+      populate: () => chain,
+      then: (resolve) => resolve(result),
+    };
+    return chain;
   });
+
+  Cooperative.findById = jest.fn(async (id) => ({
+    _id: id,
+    name: "Mock Cooperative",
+  }));
 
   Cooperative.findOne = jest.fn(async (query) => {
     if (query.userId?.toString() === MOCK_IDS.cooperative) {
@@ -138,12 +171,14 @@ const routesToTest = [
   { method: "put", path: "/cooperative/profile", allowedRoles: ["cooperative"] },
   { method: "get", path: "/worker/", allowedRoles: ["cooperative"] },
   { method: "post", path: "/worker/register-by-cooperative", allowedRoles: ["cooperative"] },
-  { method: "put", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["cooperative"] },
   { method: "delete", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["cooperative"] },
   { method: "patch", path: "/worker/60f71b2f9f1b2c001f8e4a3b/verify", allowedRoles: ["cooperative"] },
 
   // Worker or Cooperative Role Required
+  { method: "put", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["worker", "cooperative"] },
   { method: "get", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["worker", "cooperative"] },
+  { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/ongoing", allowedRoles: ["worker", "cooperative"] },
+  { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/previous", allowedRoles: ["worker", "cooperative"] },
 
   // Customer Role Required
   { method: "post", path: "/api/service-requests/", allowedRoles: ["customer"] },
@@ -216,6 +251,16 @@ describe("GET /worker/:id Ownership & Cooperative Association Logic", () => {
     expect(res.body.worker._id).toBe(MOCK_IDS.targetWorker);
   });
 
+  test("allows worker to view their own profile using userId as :id", async () => {
+    const res = await request(app)
+      .get(`/worker/${MOCK_IDS.worker}`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.worker._id).toBe(MOCK_IDS.targetWorker);
+  });
+
   test("rejects worker trying to view another worker's profile with 403", async () => {
     const res = await request(app)
       .get(`/worker/${MOCK_IDS.targetWorker}`)
@@ -254,5 +299,107 @@ describe("GET /worker/:id Ownership & Cooperative Association Logic", () => {
     expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toContain("Requires worker or cooperative role");
+  });
+});
+
+describe("GET /worker/:id/public Public Profile Logic", () => {
+  test("returns worker public profile with limited non-sensitive info", async () => {
+    const res = await request(app)
+      .get(`/worker/${MOCK_IDS.targetWorker}/public`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.worker._id).toBe(MOCK_IDS.targetWorker);
+    expect(res.body.worker.name).toBeDefined();
+    expect(res.body.worker.email).toBeUndefined();
+    expect(res.body.worker.mobileNumber).toBeUndefined();
+    expect(res.body.worker.address).toBeUndefined();
+  });
+});
+
+describe("GET worker ongoing & previous services logic", () => {
+  test("allows worker to view ongoing services via worker ID", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/ongoing`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.ongoingServices)).toBe(true);
+  });
+
+  test("allows worker to view ongoing services via userId", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.worker}/ongoing`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.ongoingServices)).toBe(true);
+  });
+
+  test("allows worker to view previous services via worker ID", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/previous`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.previousServices)).toBe(true);
+  });
+
+  test("allows worker to view previous services via userId", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.worker}/previous`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.previousServices)).toBe(true);
+  });
+
+  test("allows cooperative to view worker's ongoing services", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/ongoing`)
+      .set("user-id", MOCK_IDS.cooperative);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test("allows cooperative to view worker's previous services", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/previous`)
+      .set("user-id", MOCK_IDS.cooperative);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});
+
+describe("PUT /worker/:id Worker Update & Join Cooperative Logic", () => {
+  test("allows worker to update their own profile / join cooperative", async () => {
+    const res = await request(app)
+      .put(`/worker/${MOCK_IDS.targetWorker}`)
+      .set("user-id", MOCK_IDS.worker)
+      .send({
+        cooperativeId: "60f71b2f9f1b2c001f8e4a99",
+        skills: ["plumbing", "electrical"],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test("rejects worker attempting to update another worker's profile with 403", async () => {
+    const res = await request(app)
+      .put(`/worker/${MOCK_IDS.targetWorker}`)
+      .set("user-id", MOCK_IDS.otherWorker)
+      .send({
+        skills: ["painting"],
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
   });
 });

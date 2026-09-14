@@ -71,7 +71,7 @@ const registerWorker = async (req, res) => {
     experience,
     certifications,
     address: address ? trim(address) : address,
-    verification: req.body.verification || "pending",
+    verification: "pending",
   });
 
   res.status(201).json({
@@ -127,7 +127,7 @@ const updateWorker = async (req, res) => {
   }
 
   const errors = [];
-  const { skills, experience, certifications, address } = req.body;
+  const { skills, experience, certifications, address, cooperativeId } = req.body;
 
   if (skills !== undefined && !isStringArray(skills)) {
     errors.push("skills must be an array of non-empty strings");
@@ -144,29 +144,52 @@ const updateWorker = async (req, res) => {
   ) {
     errors.push("address must be a non-empty string");
   }
+  if (
+    cooperativeId !== undefined &&
+    cooperativeId !== null &&
+    !isValidObjectId(cooperativeId)
+  ) {
+    errors.push("Invalid cooperativeId");
+  }
 
   throwIfErrors(errors);
 
-  const cooperative = await Cooperative.findOne({
-    userId: req.user._id,
-  });
-
-  if (!cooperative) {
-    return res.status(404).json({
-      success: false,
-      message: "Cooperative profile not found",
-    });
-  }
-
   const worker = await Worker.findOne({
-    _id: req.params.id,
-    cooperativeId: cooperative._id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
   });
 
   if (!worker) {
     return res.status(404).json({
       success: false,
-      message: "Worker not found in your cooperative",
+      message: "Worker not found",
+    });
+  }
+
+  let isAuthorized = false;
+
+  if (req.user.roles.includes("worker")) {
+    if (worker.userId.toString() === req.user._id.toString()) {
+      isAuthorized = true;
+    }
+  }
+
+  if (req.user.roles.includes("cooperative")) {
+    const cooperative = await Cooperative.findOne({
+      userId: req.user._id,
+    });
+    if (
+      cooperative &&
+      worker.cooperativeId &&
+      worker.cooperativeId.toString() === cooperative._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied: You are not authorized to update this worker's details",
     });
   }
 
@@ -178,7 +201,23 @@ const updateWorker = async (req, res) => {
     }
   });
 
+  if (cooperativeId !== undefined) {
+    if (cooperativeId !== null) {
+      const targetCooperative = await Cooperative.findById(cooperativeId);
+      if (!targetCooperative) {
+        return res.status(404).json({
+          success: false,
+          message: "Selected cooperative not found",
+        });
+      }
+      worker.cooperativeId = cooperativeId;
+    } else {
+      worker.cooperativeId = null;
+    }
+  }
+
   await worker.save();
+  await worker.populate("cooperativeId", "name location");
 
   res.status(200).json({
     success: true,
@@ -204,7 +243,7 @@ const deleteWorker = async (req, res) => {
   }
 
   const worker = await Worker.findOneAndDelete({
-    _id: req.params.id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
     cooperativeId: cooperative._id,
   });
 
@@ -250,7 +289,7 @@ const verifyWorker = async (req, res) => {
   }
 
   const worker = await Worker.findOne({
-    _id: req.params.id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
     cooperativeId: cooperative._id,
   });
 
@@ -349,7 +388,9 @@ const getWorkerById = async (req, res) => {
     throwIfErrors(["Invalid worker ID"]);
   }
 
-  const worker = await Worker.findById(req.params.id)
+  const worker = await Worker.findOne({
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
+  })
     .populate("userId", "name email mobileNumber")
     .populate("cooperativeId", "name location");
 
@@ -400,6 +441,48 @@ const getWorkerById = async (req, res) => {
   });
 };
 
+const getWorkerPublicProfile = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
+  const worker = await Worker.findOne({
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
+  })
+    .populate("userId", "name")
+    .populate("cooperativeId", "name location");
+
+  if (!worker) {
+    return res.status(404).json({
+      success: false,
+      message: "Worker not found",
+    });
+  }
+
+  const publicProfile = {
+    _id: worker._id,
+    name: worker.userId?.name || "Anonymous Worker",
+    skills: worker.skills || [],
+    experience: worker.experience || 0,
+    certifications: worker.certifications || [],
+    verification: worker.verification || "pending",
+    rating: worker.rating || 0,
+    cooperative: worker.cooperativeId
+      ? {
+          _id: worker.cooperativeId._id,
+          name: worker.cooperativeId.name,
+          location: worker.cooperativeId.location,
+        }
+      : null,
+    createdAt: worker.createdAt,
+  };
+
+  res.status(200).json({
+    success: true,
+    worker: publicProfile,
+  });
+};
+
 export {
   registerWorker,
   loginWorker,
@@ -409,4 +492,5 @@ export {
   verifyWorker,
   registerWorkerByCooperative,
   getWorkerById,
+  getWorkerPublicProfile,
 };
