@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ClipboardList,
   Plus,
@@ -61,32 +61,74 @@ interface ServiceRequestItem {
 
 const DEFAULT_SERVICES: ServiceItem[] = [
   {
-    _id: '65f1a2b3c4d5e6f7a8b9c0d1',
-    name: 'AC Foam Jet Servicing & Repair',
+    _id: '6aa6b59a6bbb7420349a29e5',
+    name: 'Masonry Work',
+    category: 'Masonry',
+    description: 'Brickwork, cement work, wall repairs, and other general masonry services.',
+    basePrice: 600,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29e6',
+    name: 'AC Repair',
     category: 'Appliance Repair',
-    description: 'Deep foam jet cleaning, gas check, and cooling performance optimization.',
-    basePrice: 599,
+    description: 'Inspection, servicing, and repair of residential air conditioning systems.',
+    basePrice: 500,
   },
   {
-    _id: '65f1a2b3c4d5e6f7a8b9c0d2',
-    name: 'Bathroom Deep Cleaning (Intense)',
-    category: 'Home Cleaning',
-    description: 'Stain removal, sanitization, hard water residue cleaning, and tile scrubbing.',
-    basePrice: 899,
+    _id: '6aa6b59a6bbb7420349a29e7',
+    name: 'Welding Work',
+    category: 'Welding',
+    description: 'Metal welding and fabrication services for gates, grills, frames, and other structures.',
+    basePrice: 700,
   },
   {
-    _id: '65f1a2b3c4d5e6f7a8b9c0d3',
-    name: 'Electrician & Switchboard Repair',
-    category: 'Electrician',
-    description: 'Inspection, short circuit fix, socket replacement & safety check.',
-    basePrice: 249,
+    _id: '6aa6b59a6bbb7420349a29e8',
+    name: 'Garden Maintenance',
+    category: 'Gardening',
+    description: 'Routine garden maintenance including trimming, cleaning, pruning, and plant care.',
+    basePrice: 400,
   },
   {
-    _id: '65f1a2b3c4d5e6f7a8b9c0d4',
-    name: 'Water Purifier RO Service & Installation',
-    category: 'Appliance Repair',
-    description: 'Filter check, TDS measurement, membrane flushing & leak resolution.',
-    basePrice: 399,
+    _id: '6aa6b59a6bbb7420349a29e9',
+    name: 'Floor Tiling',
+    category: 'Tiling',
+    description: 'Installation and replacement of floor and wall tiles with proper leveling and finishing.',
+    basePrice: 1000,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29ea',
+    name: 'Bathroom Fitting',
+    category: 'Plumbing',
+    description: 'Installation and replacement of bathroom fixtures including taps, showers, and fittings.',
+    basePrice: 600,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29eb',
+    name: 'Plumbing Repair',
+    category: 'Plumbing',
+    description: 'Professional repair of leaking pipes, taps, faucets, and other plumbing issues.',
+    basePrice: 300,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29ec',
+    name: 'Electrical Wiring',
+    category: 'Electrical',
+    description: 'Electrical wiring, switch installation, socket replacement, and basic electrical repairs.',
+    basePrice: 500,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29ed',
+    name: 'Furniture Repair',
+    category: 'Carpentry',
+    description: 'Repair and maintenance of wooden furniture including chairs, tables, doors, and cabinets.',
+    basePrice: 400,
+  },
+  {
+    _id: '6aa6b59a6bbb7420349a29ee',
+    name: 'Wall Painting',
+    category: 'Painting',
+    description: 'Professional interior and exterior wall painting with surface preparation and finishing.',
+    basePrice: 800,
   },
 ];
 
@@ -164,6 +206,7 @@ const StatusStepper = ({ status }: { status: string }) => {
 
 export default function UserDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'active-requests' | 'completed-jobs' | 'new-request' | 'browse'>('active-requests');
 
   // State for available services and service requests
@@ -195,6 +238,25 @@ export default function UserDashboard() {
   // Worker Public Profile modal state
   const [selectedWorkerProfile, setSelectedWorkerProfile] = useState<any | null>(null);
   const [loadingWorkerProfile, setLoadingWorkerProfile] = useState<boolean>(false);
+
+  // Listen to navigation location state (e.g. from Landing page service click)
+  useEffect(() => {
+    if (location.state) {
+      const { tab, serviceId, serviceName, serviceDescription } = location.state as any;
+      if (tab) {
+        setActiveTab(tab);
+      }
+      if (serviceId) {
+        setSelectedServiceId(serviceId);
+      }
+      if (serviceName) {
+        setTitle(serviceName);
+      }
+      if (serviceDescription) {
+        setDescription(serviceDescription);
+      }
+    }
+  }, [location.state]);
 
   const handleOpenWorkerProfile = async (workerObj: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -304,6 +366,19 @@ export default function UserDashboard() {
         const list = Array.isArray(data) ? data : data.services || data.data || [];
         if (list.length > 0) {
           setServices(list);
+          const targetId = location.state?.serviceId;
+          const targetName = location.state?.serviceName;
+          if (targetId || targetName) {
+            const matched = list.find(
+              (s: ServiceItem) =>
+                s._id === targetId || s.name.toLowerCase() === (targetName || '').toLowerCase()
+            );
+            if (matched) {
+              setSelectedServiceId(matched._id);
+              setTitle((prev) => prev || matched.name);
+              setDescription((prev) => prev || matched.description);
+            }
+          }
         }
       }
     } catch {

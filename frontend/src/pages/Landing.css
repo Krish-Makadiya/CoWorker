@@ -129,6 +129,7 @@
   cursor: pointer;
   position: relative;
   transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
 .uc-tab-btn:hover {
@@ -842,13 +843,27 @@
 }
 
 /* Grid Layouts */
-.uc-grid-5 {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+/* Grid Layouts converted to Single Row Horizontal Scroll Sliders */
+.uc-grid-5, .uc-grid-4 {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 1.25rem;
+  padding-bottom: 0.5rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.uc-grid-5::-webkit-scrollbar, .uc-grid-4::-webkit-scrollbar {
+  display: none;
 }
 
 .uc-appliance-card {
+  min-width: 220px;
+  max-width: 240px;
+  flex: 0 0 calc(20% - 1rem);
   background: var(--uc-white);
   border: 1px solid var(--uc-border);
   border-radius: var(--uc-radius-lg);
@@ -859,6 +874,7 @@
   height: 220px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .uc-appliance-card:hover {
@@ -888,13 +904,10 @@
   object-fit: cover;
 }
 
-.uc-grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
 .uc-cleaning-card {
+  min-width: 220px;
+  max-width: 240px;
+  flex: 0 0 calc(20% - 1rem);
   background: var(--uc-white);
   border: 1px solid var(--uc-border);
   border-radius: var(--uc-radius-lg);
@@ -905,6 +918,7 @@
   justify-content: space-between;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .uc-cleaning-card:hover {
@@ -1198,12 +1212,6 @@
   .uc-banners-row {
     grid-template-columns: 1fr;
   }
-  .uc-grid-5 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .uc-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .uc-gig-roles-grid {
     grid-template-columns: 1fr;
   }
@@ -1218,12 +1226,6 @@
   }
   .uc-category-tabs {
     display: none;
-  }
-  .uc-grid-5 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .uc-grid-4 {
-    grid-template-columns: 1fr;
   }
   .uc-hero-title {
     font-size: 2rem;
