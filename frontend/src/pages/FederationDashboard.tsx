@@ -14,17 +14,14 @@ import {
   Mail,
   Star,
   Search,
-  Plus,
   UserPlus
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import Navbar, { type CooperativeItem } from "../components/Navbar";
+import Navbar from "../components/Navbar";
 import FederationOnboarding from "../components/FederationOnboarding";
 import { API_BASE_URL } from "../config/api";
 
 export default function FederationDashboard() {
-  const [cooperatives, setCooperatives] = useState<CooperativeItem[]>([]);
-  const [selectedCoopId, setSelectedCoopId] = useState<string>("");
   const [cooperative, setCooperative] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAddingNewOnboarding, setIsAddingNewOnboarding] = useState<boolean>(false);
@@ -135,19 +132,15 @@ export default function FederationDashboard() {
       const response = await fetch(`${API_BASE_URL}/cooperative`);
       const data = await response.json();
       if (response.ok && data.success && data.cooperatives?.length > 0) {
-        setCooperatives(data.cooperatives);
         const userCoop = loggedUserId
           ? data.cooperatives.find((c: any) => {
               const cUserId = typeof c.userId === "object" ? c.userId?._id : c.userId;
               return cUserId === loggedUserId;
             })
           : null;
-        const activeId = selectedCoopId || (userCoop ? userCoop._id : data.cooperatives[0]._id);
-        setSelectedCoopId(activeId);
-        const current = data.cooperatives.find((c: any) => c._id === activeId) || data.cooperatives[0];
+        const current = userCoop || data.cooperatives[0];
         setCooperative(current);
       } else {
-        setCooperatives([]);
         setCooperative(null);
       }
     } catch (err) {
@@ -160,15 +153,6 @@ export default function FederationDashboard() {
   useEffect(() => {
     fetchCooperatives();
   }, []);
-
-  const handleSelectCoop = (coopId: string) => {
-    setSelectedCoopId(coopId);
-    setIsAddingNewOnboarding(false);
-    const found = cooperatives.find((c) => c._id === coopId);
-    if (found) {
-      setCooperative(found);
-    }
-  };
 
   const userId = cooperative?.userId?._id || cooperative?.userId;
 
@@ -355,10 +339,6 @@ export default function FederationDashboard() {
       <Navbar
         portalName="Federation & Cooperative Portal"
         portalIcon={Building2}
-        cooperatives={cooperatives}
-        selectedCoopId={selectedCoopId}
-        onSelectCoop={handleSelectCoop}
-        onStartOnboarding={() => setIsAddingNewOnboarding(true)}
         onRefresh={() => {
           fetchCooperatives();
           fetchWorkers();
@@ -448,14 +428,6 @@ export default function FederationDashboard() {
                   style={{ fontSize: "0.85rem", padding: "8px 14px", background: "#f1f3f4", border: "1px solid #dadce0", borderRadius: "6px", cursor: "pointer" }}
                 >
                   <Edit3 size={14} /> {isEditing ? "Close Edit" : "Edit Details"}
-                </button>
-
-                <button
-                  onClick={() => setIsAddingNewOnboarding(true)}
-                  className="btn btn-secondary"
-                  style={{ fontSize: "0.85rem", padding: "8px 14px", background: "#f1f3f4", border: "1px solid #dadce0", borderRadius: "6px", cursor: "pointer" }}
-                >
-                  <Plus size={14} /> Onboard Another
                 </button>
               </div>
             </div>
