@@ -363,7 +363,7 @@ List workers belonging to the authenticated cooperative.
 
 #### `GET /worker/:id`
 
-Get worker details by ID.
+Get worker details by Worker `_id` or User `userId`.
 
 🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
 
@@ -371,9 +371,9 @@ Get worker details by ID.
 
 **URL Parameters**
 
-| Param | Type     | Description             |
-| ----- | -------- | ----------------------- |
-| `id`  | ObjectId | The `_id` of the Worker |
+| Param | Type     | Description                                      |
+| ----- | -------- | ------------------------------------------------ |
+| `id`  | ObjectId | The `_id` of the Worker or the Worker's `userId` |
 
 **Response `200`**
 
@@ -740,7 +740,7 @@ All errors follow this format:
 | `POST`   | `/cooperative/register`                 | Public               | Register a cooperative                            |
 | `POST`   | `/cooperative/login`                    | Public               | Login as cooperative                              |
 | `GET`    | `/worker/`                              | Cooperative          | List cooperative's workers 🔒                     |
-| `GET`    | `/worker/:id`                           | Worker / Cooperative | Get worker details (owner/coop only) 🔒           |
+| `GET`    | `/worker/:id`                           | Worker / Cooperative | Get worker details by worker ID or user ID (owner/coop only) 🔒 |
 | `POST`   | `/worker/register`                      | Public               | Register a worker                                 |
 | `POST`   | `/worker/login`                         | Public               | Login as worker                                   |
 | `PUT`    | `/worker/:id`                           | Cooperative          | Update a worker 🔒                                |

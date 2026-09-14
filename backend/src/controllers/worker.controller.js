@@ -71,7 +71,7 @@ const registerWorker = async (req, res) => {
     experience,
     certifications,
     address: address ? trim(address) : address,
-    verification: req.body.verification || "pending",
+    verification: "pending",
   });
 
   res.status(201).json({
@@ -159,7 +159,7 @@ const updateWorker = async (req, res) => {
   }
 
   const worker = await Worker.findOne({
-    _id: req.params.id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
     cooperativeId: cooperative._id,
   });
 
@@ -204,7 +204,7 @@ const deleteWorker = async (req, res) => {
   }
 
   const worker = await Worker.findOneAndDelete({
-    _id: req.params.id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
     cooperativeId: cooperative._id,
   });
 
@@ -250,7 +250,7 @@ const verifyWorker = async (req, res) => {
   }
 
   const worker = await Worker.findOne({
-    _id: req.params.id,
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
     cooperativeId: cooperative._id,
   });
 
@@ -349,7 +349,9 @@ const getWorkerById = async (req, res) => {
     throwIfErrors(["Invalid worker ID"]);
   }
 
-  const worker = await Worker.findById(req.params.id)
+  const worker = await Worker.findOne({
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
+  })
     .populate("userId", "name email mobileNumber")
     .populate("cooperativeId", "name location");
 

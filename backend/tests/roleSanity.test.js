@@ -91,20 +91,44 @@ beforeAll(() => {
   Worker.find = jest.fn(() => createMockChain([]));
   Worker.findOneAndDelete = jest.fn(async () => null);
 
-  Worker.findOne = jest.fn(async (query) => {
-    if (query.userId?.toString() === MOCK_IDS.worker) {
-      return {
-        _id: new mongoose.Types.ObjectId(MOCK_IDS.targetWorker),
-        userId: new mongoose.Types.ObjectId(MOCK_IDS.worker),
-      };
+  Worker.findOne = jest.fn((query) => {
+    let result = null;
+    const targetWorkerObj = {
+      _id: new mongoose.Types.ObjectId(MOCK_IDS.targetWorker),
+      userId: new mongoose.Types.ObjectId(MOCK_IDS.worker),
+      cooperativeId: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a99"),
+      skills: ["plumbing"],
+      verification: "verified",
+    };
+    const otherWorkerObj = {
+      _id: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a88"),
+      userId: new mongoose.Types.ObjectId(MOCK_IDS.otherWorker),
+      verification: "verified",
+    };
+
+    if (query && query.$or) {
+      const match = query.$or.some(
+        (cond) =>
+          cond._id?.toString() === MOCK_IDS.targetWorker ||
+          cond.userId?.toString() === MOCK_IDS.targetWorker ||
+          cond.userId?.toString() === MOCK_IDS.worker
+      );
+      if (match) {
+        result = targetWorkerObj;
+      }
+    } else if (query?.userId?.toString() === MOCK_IDS.worker) {
+      result = targetWorkerObj;
+    } else if (query?.userId?.toString() === MOCK_IDS.otherWorker) {
+      result = otherWorkerObj;
+    } else if (query?._id?.toString() === MOCK_IDS.targetWorker) {
+      result = targetWorkerObj;
     }
-    if (query.userId?.toString() === MOCK_IDS.otherWorker) {
-      return {
-        _id: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a88"),
-        userId: new mongoose.Types.ObjectId(MOCK_IDS.otherWorker),
-      };
-    }
-    return null;
+
+    const chain = {
+      populate: () => chain,
+      then: (resolve) => resolve(result),
+    };
+    return chain;
   });
 
   Cooperative.findOne = jest.fn(async (query) => {
@@ -209,6 +233,16 @@ describe("GET /worker/:id Ownership & Cooperative Association Logic", () => {
   test("allows worker to view their own profile", async () => {
     const res = await request(app)
       .get(`/worker/${MOCK_IDS.targetWorker}`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.worker._id).toBe(MOCK_IDS.targetWorker);
+  });
+
+  test("allows worker to view their own profile using userId as :id", async () => {
+    const res = await request(app)
+      .get(`/worker/${MOCK_IDS.worker}`)
       .set("user-id", MOCK_IDS.worker);
 
     expect(res.status).toBe(200);
