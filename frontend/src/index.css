@@ -245,6 +245,24 @@ a:hover {
   color: var(--primary);
 }
 
+.btn-logout {
+  background: var(--rose-bg, #fdeeed);
+  color: var(--rose-text, #c43737);
+  border: 1px solid var(--rose-border, #f7cece);
+  box-shadow: 0 1px 2px rgba(196, 55, 55, 0.05);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+}
+
+.btn-logout:hover {
+  background: #fcdbd8;
+  color: #991b1b;
+  border-color: #f3a4a4;
+  box-shadow: 0 2px 6px rgba(196, 55, 55, 0.12);
+  transform: translateY(-1px);
+}
+
 .btn-lg {
   padding: 0.875rem 1.75rem;
   font-size: var(--font-size-base);

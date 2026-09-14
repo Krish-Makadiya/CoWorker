@@ -237,14 +237,13 @@ export default function Navbar({
           {/* Standardized Logout Button */}
           <button
             onClick={handleLogout}
-            className="btn btn-secondary"
+            className="btn btn-logout"
             style={{
               padding: "8px 16px",
               fontSize: "0.88rem",
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              fontWeight: 600,
             }}
             title="Logout"
           >

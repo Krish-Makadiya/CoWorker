@@ -455,9 +455,16 @@ export default function Landing() {
                   <span>Dashboard</span>
                 </button>
                 <button
-                  className="uc-user-btn"
+                  className="btn btn-logout"
                   onClick={handleLogout}
-                  style={{ background: 'var(--danger, #ef4444)', borderColor: 'var(--danger, #ef4444)', color: '#ffffff' }}
+                  style={{
+                    padding: '0.6rem 1.1rem',
+                    fontSize: '0.88rem',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
                 >
                   <LogOut size={16} />
                   <span>Logout</span>
