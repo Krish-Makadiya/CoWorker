@@ -143,12 +143,15 @@ function JobCardCarousel({
 export default function WorkerDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
-    "my-jobs" | "available-jobs" | "profile"
-  >("my-jobs");
+    "ongoing-jobs" | "previous-jobs" | "available-jobs" | "profile"
+  >("ongoing-jobs");
 
-  const [myJobs, setMyJobs] = useState<ServiceRequest[]>([]);
+  const [ongoingJobs, setOngoingJobs] = useState<ServiceRequest[]>([]);
+  const [previousJobs, setPreviousJobs] = useState<ServiceRequest[]>([]);
   const [availableJobs, setAvailableJobs] = useState<ServiceRequest[]>([]);
 
+  const [isLoadingOngoing, setIsLoadingOngoing] = useState(false);
+  const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -220,6 +223,8 @@ export default function WorkerDashboard() {
     console.log(storedWorkerId);
     if (storedWorkerId) {
       fetchWorkerProfile(storedWorkerId);
+      fetchOngoingServices(storedWorkerId);
+      fetchPreviousServices(storedWorkerId);
     }
 
     fetchAvailableJobs();
@@ -256,6 +261,50 @@ export default function WorkerDashboard() {
       }
     } catch (error) {
       console.error("Fetch worker profile error:", error);
+    }
+  };
+
+  const fetchOngoingServices = async (id?: string) => {
+    const targetId = id || localStorage.getItem("userId");
+    if (!targetId) return;
+    setIsLoadingOngoing(true);
+    try {
+      const response = await fetch(ROUTES.worker.ongoingServices(targetId), {
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setOngoingJobs(data.ongoingServices || data.serviceRequests || []);
+      }
+    } catch (error) {
+      console.error("Fetch ongoing services error:", error);
+    } finally {
+      setIsLoadingOngoing(false);
+    }
+  };
+
+  const fetchPreviousServices = async (id?: string) => {
+    const targetId = id || localStorage.getItem("userId");
+    if (!targetId) return;
+    setIsLoadingPrevious(true);
+    try {
+      const response = await fetch(ROUTES.worker.previousServices(targetId), {
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setPreviousJobs(data.previousServices || data.serviceRequests || []);
+      }
+    } catch (error) {
+      console.error("Fetch previous services error:", error);
+    } finally {
+      setIsLoadingPrevious(false);
     }
   };
 
@@ -300,17 +349,12 @@ export default function WorkerDashboard() {
 
       if (response.ok && data.success) {
         toast.success("Job accepted successfully!");
-        const updatedJob = data.serviceRequest || {
-          ...job,
-          status: "accepted",
-        };
-
         setAvailableJobs((prev) => prev.filter((j) => j._id !== job._id));
-        setMyJobs((prev) => [updatedJob, ...prev]);
+        fetchOngoingServices();
         if (selectedJobModal?._id === job._id) {
           setSelectedJobModal(null);
         }
-        setActiveTab("my-jobs");
+        setActiveTab("ongoing-jobs");
       } else {
         toast.error(data.message || "Failed to accept job");
       }
@@ -335,13 +379,14 @@ export default function WorkerDashboard() {
 
       if (response.ok && data.success) {
         toast.success("Job started!");
-        setMyJobs((prev) =>
+        setOngoingJobs((prev) =>
           prev.map((job) =>
             job._id === jobId
               ? data.serviceRequest || { ...job, status: "in_progress" }
               : job,
           ),
         );
+        fetchOngoingServices();
       } else {
         toast.error(data.message || "Failed to start job");
       }
@@ -369,13 +414,8 @@ export default function WorkerDashboard() {
 
       if (response.ok && data.success) {
         toast.success("Job marked as completed!");
-        setMyJobs((prev) =>
-          prev.map((job) =>
-            job._id === jobId
-              ? data.serviceRequest || { ...job, status: "completed" }
-              : job,
-          ),
-        );
+        fetchOngoingServices();
+        fetchPreviousServices();
       } else {
         toast.error(data.message || "Failed to complete job");
       }
@@ -408,9 +448,7 @@ export default function WorkerDashboard() {
 
       if (response.ok && data.success) {
         toast.success(`${files.length} photo(s) uploaded successfully!`);
-        setMyJobs((prev) =>
-          prev.map((job) => (job._id === jobId ? data.serviceRequest : job)),
-        );
+        fetchOngoingServices();
       } else {
         toast.error(data.message || "Failed to upload photos");
       }
@@ -447,12 +485,15 @@ export default function WorkerDashboard() {
 
           <div className="customer-tabs">
             <button
-              className={`customer-tab-btn ${activeTab === "my-jobs" ? "active" : ""}`}
-              onClick={() => setActiveTab("my-jobs")}
+              className={`customer-tab-btn ${activeTab === "ongoing-jobs" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab("ongoing-jobs");
+                fetchOngoingServices();
+              }}
             >
               <Briefcase size={18} />
-              My Jobs
-              {myJobs.length > 0 && (
+              Ongoing Jobs
+              {ongoingJobs.length > 0 && (
                 <span
                   className="tab-badge"
                   style={{
@@ -464,7 +505,32 @@ export default function WorkerDashboard() {
                     fontSize: "12px",
                   }}
                 >
-                  {myJobs.length}
+                  {ongoingJobs.length}
+                </span>
+              )}
+            </button>
+            <button
+              className={`customer-tab-btn ${activeTab === "previous-jobs" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab("previous-jobs");
+                fetchPreviousServices();
+              }}
+            >
+              <Clock size={18} />
+              Previous Services
+              {previousJobs.length > 0 && (
+                <span
+                  className="tab-badge"
+                  style={{
+                    marginLeft: "8px",
+                    background: "#4b5563",
+                    color: "white",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                  }}
+                >
+                  {previousJobs.length}
                 </span>
               )}
             </button>
@@ -488,14 +554,51 @@ export default function WorkerDashboard() {
           </div>
         </header>
 
-        {activeTab === "my-jobs" && (
+        {activeTab === "ongoing-jobs" && (
           <div className="tab-content fade-in">
-            {myJobs.length === 0 ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#111827" }}>
+                Currently Ongoing Services
+              </h2>
+              <button
+                onClick={() => fetchOngoingServices()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 12px",
+                  background: "#f3f4f6",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "6px",
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                <RefreshCw size={14} className={isLoadingOngoing ? "spin" : ""} /> Refresh
+              </button>
+            </div>
+
+            {isLoadingOngoing ? (
+              <div style={{ textAlign: "center", padding: "3rem" }}>
+                <Loader2 className="spin" size={32} color="var(--primary)" />
+                <p style={{ marginTop: "0.5rem", color: "#6b7280" }}>
+                  Loading active jobs...
+                </p>
+              </div>
+            ) : ongoingJobs.length === 0 ? (
               <div className="empty-requests-state">
                 <div className="empty-requests-icon">
                   <Briefcase size={48} color="var(--primary-light-text)" />
                 </div>
-                <h3>No active jobs</h3>
+                <h3>No active ongoing jobs</h3>
                 <p>
                   Browse available service requests to get started and earn.
                 </p>
@@ -520,7 +623,7 @@ export default function WorkerDashboard() {
               </div>
             ) : (
               <div className="requests-list">
-                {myJobs.map((job) => (
+                {ongoingJobs.map((job) => (
                   <div key={job._id} className="request-item-card">
                     <div className="request-main-info">
                       <div className="request-header-row">
@@ -720,24 +823,156 @@ export default function WorkerDashboard() {
                             </button>
                           </>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-                        {job.status === "completed" && (
-                          <span
-                            className="status-badge status-completed"
-                            style={{ fontSize: "0.8rem" }}
-                          >
-                            <CheckCircle
-                              size={14}
-                              style={{
-                                display: "inline",
-                                verticalAlign: "text-bottom",
-                                marginRight: "4px",
-                              }}
-                            />
-                            Job Completed
+        {activeTab === "previous-jobs" && (
+          <div className="tab-content fade-in">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#111827" }}>
+                  Previous Services & History
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#6b7280", marginTop: "2px" }}>
+                  Track past completed and cancelled service records
+                </p>
+              </div>
+              <button
+                onClick={() => fetchPreviousServices()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 12px",
+                  background: "#f3f4f6",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "6px",
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                <RefreshCw size={14} className={isLoadingPrevious ? "spin" : ""} /> Refresh
+              </button>
+            </div>
+
+            {isLoadingPrevious ? (
+              <div style={{ textAlign: "center", padding: "3rem" }}>
+                <Loader2 className="spin" size={32} color="var(--primary)" />
+                <p style={{ marginTop: "0.5rem", color: "#6b7280" }}>
+                  Loading work history...
+                </p>
+              </div>
+            ) : previousJobs.length === 0 ? (
+              <div className="empty-requests-state">
+                <div className="empty-requests-icon">
+                  <Clock size={48} color="var(--primary-light-text)" />
+                </div>
+                <h3>No service history</h3>
+                <p>Your completed or past services will be recorded here.</p>
+              </div>
+            ) : (
+              <div className="requests-list">
+                {previousJobs.map((job) => (
+                  <div key={job._id} className="request-item-card" style={{ opacity: job.status === "cancelled" ? 0.8 : 1 }}>
+                    <div className="request-main-info">
+                      <div className="request-header-row">
+                        <h3 className="request-title">
+                          {job.title || job.serviceId?.name || "Service Request"}
+                        </h3>
+                        <span className={`status-badge status-${job.status}`}>
+                          {job.status === "completed" ? (
+                            <>
+                              <CheckCircle2 size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                              COMPLETED
+                            </>
+                          ) : (
+                            job.status.toUpperCase()
+                          )}
+                        </span>
+                      </div>
+
+                      <p style={{ color: "#4b5563", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
+                        {job.description}
+                      </p>
+
+                      <div className="request-meta">
+                        <span className="meta-item">
+                          <MapPin size={16} /> {job.address}
+                        </span>
+                        <span className="meta-item">
+                          <Calendar size={16} /> Scheduled: {formatDate(job.scheduledAt)}
+                        </span>
+                        {job.serviceId?.category && (
+                          <span className="meta-item">
+                            <Wrench size={16} /> {job.serviceId.category}
+                          </span>
+                        )}
+                        {job.customerId?.userId?.name && (
+                          <span className="meta-item">
+                            <User size={16} /> Customer: {job.customerId.userId.name}
                           </span>
                         )}
                       </div>
+
+                      {job.preServicePhotos && job.preServicePhotos.length > 0 && (
+                        <div className="request-photos-grid">
+                          <span className="photo-label">Pre-service Photos:</span>
+                          <div className="photos-row">
+                            {job.preServicePhotos.map((photo, idx) => (
+                              <img
+                                key={`pre-${idx}`}
+                                src={photo}
+                                alt="Pre-service"
+                                className="photo-thumb"
+                                style={{ cursor: "pointer" }}
+                                onClick={() =>
+                                  setLightbox({
+                                    photos: job.preServicePhotos!,
+                                    index: idx,
+                                  })
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {job.postServicePhotos && job.postServicePhotos.length > 0 && (
+                        <div className="request-photos-grid">
+                          <span className="photo-label">Post-service Photos:</span>
+                          <div className="photos-row">
+                            {job.postServicePhotos.map((photo, idx) => (
+                              <img
+                                key={`post-${idx}`}
+                                src={photo}
+                                alt="Post-service"
+                                className="photo-thumb"
+                                style={{ cursor: "pointer" }}
+                                onClick={() =>
+                                  setLightbox({
+                                    photos: job.postServicePhotos!,
+                                    index: idx,
+                                  })
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -877,19 +1112,19 @@ export default function WorkerDashboard() {
             <div className="worker-stats-row">
               <div className="worker-stat-item">
                 <div className="worker-stat-number">
-                  {myJobs.filter((j) => j.status === "completed").length}
+                  {previousJobs.filter((j) => j.status === "completed").length}
                 </div>
                 <div className="worker-stat-label">Completed</div>
               </div>
               <div className="worker-stat-item">
                 <div className="worker-stat-number">
-                  {myJobs.filter((j) => j.status === "in_progress").length}
+                  {ongoingJobs.filter((j) => j.status === "in_progress").length}
                 </div>
                 <div className="worker-stat-label">In Progress</div>
               </div>
               <div className="worker-stat-item">
                 <div className="worker-stat-number">
-                  {myJobs.filter((j) => j.status === "accepted").length}
+                  {ongoingJobs.filter((j) => j.status === "accepted").length}
                 </div>
                 <div className="worker-stat-label">Accepted</div>
               </div>

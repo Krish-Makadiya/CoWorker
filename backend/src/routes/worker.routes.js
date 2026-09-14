@@ -14,6 +14,11 @@ import {
   requireRole,
 } from "../middlewares/auth.middleware.js";
 
+import {
+  getWorkerOngoingServices,
+  getWorkerPreviousServices,
+} from "../controllers/serviceRequest.controller.js";
+
 const router = Router();
 
 router.get("/", authenticateUser, requireRole("cooperative"), listWorkers);
@@ -25,6 +30,34 @@ router
     authenticateUser,
     requireRole("cooperative"),
     registerWorkerByCooperative
+  );
+router
+  .route("/:id/ongoing")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerOngoingServices
+  );
+router
+  .route("/:id/ongoing-services")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerOngoingServices
+  );
+router
+  .route("/:id/previous")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerPreviousServices
+  );
+router
+  .route("/:id/previous-services")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerPreviousServices
   );
 router
   .route("/:id")

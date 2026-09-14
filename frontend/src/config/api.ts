@@ -10,6 +10,8 @@ export const ROUTES = {
     register: `${API_BASE_URL}/worker/register`,
     login: `${API_BASE_URL}/worker/login`,
     profile: (id: string) => `${API_BASE_URL}/worker/${id}`,
+    ongoingServices: (id: string) => `${API_BASE_URL}/api/service-requests/worker/${id}/ongoing`,
+    previousServices: (id: string) => `${API_BASE_URL}/api/service-requests/worker/${id}/previous`,
   },
   customer: {
     register: `${API_BASE_URL}/customer/register`,

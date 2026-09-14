@@ -4,6 +4,8 @@ import {
   getMyServiceRequests,
   getAvailableServiceRequests,
   getServiceRequestById,
+  getWorkerOngoingServices,
+  getWorkerPreviousServices,
   uploadPrePhotos,
   uploadPostPhotos,
   acceptServiceRequest,
@@ -30,6 +32,22 @@ router
 router
   .route("/available")
   .get(authenticateUser, requireRole("worker"), getAvailableServiceRequests);
+
+router
+  .route("/worker/:id/ongoing")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerOngoingServices
+  );
+
+router
+  .route("/worker/:id/previous")
+  .get(
+    authenticateUser,
+    requireRole("worker", "cooperative"),
+    getWorkerPreviousServices
+  );
 
 router
   .route("/:id")

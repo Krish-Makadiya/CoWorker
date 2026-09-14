@@ -1,6 +1,7 @@
 import { ServiceRequest } from "../models/serviceRequest.model.js";
 import { Customer } from "../models/customer.model.js";
 import { Worker } from "../models/worker.model.js";
+import { Cooperative } from "../models/cooperative.model.js";
 import { Service } from "../models/service.model.js";
 import ExpressError from "../utils/ExpressError.js";
 import { uploadToCloudinary } from "../services/cloudinary.service.js";
@@ -294,6 +295,10 @@ const acceptServiceRequest = async (req, res) => {
     throw new ExpressError("Worker profile not found", 404);
   }
 
+  if (worker.verification !== "verified") {
+    throw new ExpressError("Worker is not verified", 403);
+  }
+
   const serviceRequest = await ServiceRequest.findById(req.params.id);
   if (!serviceRequest) {
     throw new ExpressError("Service request not found", 404);
@@ -431,11 +436,155 @@ const cancelServiceRequest = async (req, res) => {
   });
 };
 
+const getWorkerOngoingServices = async (req, res) => {
+  const { id } = req.params;
+  let worker = null;
+
+  if (id === "my") {
+    worker = await Worker.findOne({ userId: req.user._id });
+  } else {
+    if (!isValidObjectId(id)) {
+      throw new ExpressError("Invalid worker ID or user ID", 400);
+    }
+    worker = await Worker.findOne({
+      $or: [{ _id: id }, { userId: id }],
+    });
+  }
+
+  if (!worker) {
+    throw new ExpressError("Worker profile not found", 404);
+  }
+
+  let isAuthorized = false;
+
+  if (req.user.roles.includes("worker")) {
+    const requestingWorker = await Worker.findOne({ userId: req.user._id });
+    if (
+      requestingWorker &&
+      requestingWorker._id.toString() === worker._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (req.user.roles.includes("cooperative")) {
+    const requestingCooperative = await Cooperative.findOne({
+      userId: req.user._id,
+    });
+    const coopId = worker.cooperativeId?._id || worker.cooperativeId;
+    if (
+      requestingCooperative &&
+      coopId &&
+      coopId.toString() === requestingCooperative._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new ExpressError(
+      "Access denied: You are not authorized to view this worker's services",
+      403
+    );
+  }
+
+  const ongoingServices = await ServiceRequest.find({
+    workerId: worker._id,
+    status: { $in: ["accepted", "in_progress"] },
+  })
+    .populate("serviceId")
+    .populate({
+      path: "customerId",
+      populate: { path: "userId", select: "name email mobileNumber" },
+    })
+    .sort({ scheduledAt: 1, createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: ongoingServices.length,
+    serviceRequests: ongoingServices,
+    ongoingServices,
+  });
+};
+
+const getWorkerPreviousServices = async (req, res) => {
+  const { id } = req.params;
+  let worker = null;
+
+  if (id === "my") {
+    worker = await Worker.findOne({ userId: req.user._id });
+  } else {
+    if (!isValidObjectId(id)) {
+      throw new ExpressError("Invalid worker ID or user ID", 400);
+    }
+    worker = await Worker.findOne({
+      $or: [{ _id: id }, { userId: id }],
+    });
+  }
+
+  if (!worker) {
+    throw new ExpressError("Worker profile not found", 404);
+  }
+
+  let isAuthorized = false;
+
+  if (req.user.roles.includes("worker")) {
+    const requestingWorker = await Worker.findOne({ userId: req.user._id });
+    if (
+      requestingWorker &&
+      requestingWorker._id.toString() === worker._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (req.user.roles.includes("cooperative")) {
+    const requestingCooperative = await Cooperative.findOne({
+      userId: req.user._id,
+    });
+    const coopId = worker.cooperativeId?._id || worker.cooperativeId;
+    if (
+      requestingCooperative &&
+      coopId &&
+      coopId.toString() === requestingCooperative._id.toString()
+    ) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new ExpressError(
+      "Access denied: You are not authorized to view this worker's services",
+      403
+    );
+  }
+
+  const previousServices = await ServiceRequest.find({
+    workerId: worker._id,
+    status: { $in: ["completed", "cancelled"] },
+  })
+    .populate("serviceId")
+    .populate({
+      path: "customerId",
+      populate: { path: "userId", select: "name email mobileNumber" },
+    })
+    .sort({ updatedAt: -1, createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: previousServices.length,
+    serviceRequests: previousServices,
+    previousServices,
+  });
+};
+
 export {
   createServiceRequest,
   getMyServiceRequests,
   getAvailableServiceRequests,
   getServiceRequestById,
+  getWorkerOngoingServices,
+  getWorkerPreviousServices,
   uploadPrePhotos,
   uploadPostPhotos,
   acceptServiceRequest,

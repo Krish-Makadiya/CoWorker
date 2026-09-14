@@ -168,6 +168,8 @@ const routesToTest = [
 
   // Worker or Cooperative Role Required
   { method: "get", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["worker", "cooperative"] },
+  { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/ongoing", allowedRoles: ["worker", "cooperative"] },
+  { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/previous", allowedRoles: ["worker", "cooperative"] },
 
   // Customer Role Required
   { method: "post", path: "/api/service-requests/", allowedRoles: ["customer"] },
@@ -288,5 +290,65 @@ describe("GET /worker/:id Ownership & Cooperative Association Logic", () => {
     expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toContain("Requires worker or cooperative role");
+  });
+});
+
+describe("GET worker ongoing & previous services logic", () => {
+  test("allows worker to view ongoing services via worker ID", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/ongoing`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.ongoingServices)).toBe(true);
+  });
+
+  test("allows worker to view ongoing services via userId", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.worker}/ongoing`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.ongoingServices)).toBe(true);
+  });
+
+  test("allows worker to view previous services via worker ID", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/previous`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.previousServices)).toBe(true);
+  });
+
+  test("allows worker to view previous services via userId", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.worker}/previous`)
+      .set("user-id", MOCK_IDS.worker);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.previousServices)).toBe(true);
+  });
+
+  test("allows cooperative to view worker's ongoing services", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/ongoing`)
+      .set("user-id", MOCK_IDS.cooperative);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test("allows cooperative to view worker's previous services", async () => {
+    const res = await request(app)
+      .get(`/api/service-requests/worker/${MOCK_IDS.targetWorker}/previous`)
+      .set("user-id", MOCK_IDS.cooperative);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });
