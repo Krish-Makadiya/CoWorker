@@ -186,7 +186,7 @@ export default function UserDashboard() {
       toast.error('Please select a service type');
       return;
     }
-    if (!title.trim() || !description.trim() || !address.trim() || !scheduledAt) {
+    if (!title.trim() || !description.trim() || !scheduledAt) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -197,7 +197,7 @@ export default function UserDashboard() {
       serviceId: selectedServiceId,
       title: title.trim(),
       description: description.trim(),
-      address: address.trim(),
+      address: address.trim() || undefined,
       location: {
         type: 'Point',
         coordinates: [parseFloat(lng) || 77.2090, parseFloat(lat) || 28.6139],
@@ -507,13 +507,13 @@ export default function UserDashboard() {
 
                 <div className="form-group mb-md">
                   <label className="form-label" htmlFor="request-address">
-                    Service Door-Step Address <span className="required">*</span>
+                    Service Door-Step Address (Optional - Defaults to saved profile address)
                   </label>
                   <input
                     id="request-address"
                     type="text"
                     className="form-input"
-                    placeholder="House/Flat No., Street, Area, City & Pincode"
+                    placeholder="Leave blank to use saved profile address, or enter custom address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
