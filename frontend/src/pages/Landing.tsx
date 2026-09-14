@@ -825,8 +825,8 @@ export default function Landing() {
         <div className="uc-container">
           <div className="uc-footer-brand-row">
             <div className="uc-brand-logo dark">
-              <span className="uc-brand-badge">UC</span>
-              <span className="uc-brand-name">Urban Company</span>
+              <span className="uc-brand-badge">CO</span>
+              <span className="uc-brand-name">CoWorker</span>
             </div>
             <span className="uc-footer-tagline">India's Leading Home Services & Gig Platform</span>
           </div>
