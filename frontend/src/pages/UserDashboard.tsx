@@ -605,6 +605,76 @@ export default function UserDashboard() {
     );
   };
 
+  const renderCompactListItem = (item: ServiceRequestItem) => {
+    const photoCount = (item.preServicePhotos?.length || 0) + (item.postServicePhotos?.length || 0);
+    const categoryName = (item.serviceId?.category || 'SERVICE').toUpperCase();
+
+    let formattedDate = 'Recent';
+    try {
+      if (item.scheduledAt) {
+        const d = new Date(item.scheduledAt);
+        if (!isNaN(d.getTime())) {
+          formattedDate = d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          }) + ', ' + d.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit'
+          });
+        }
+      }
+    } catch {
+      // fallback
+    }
+
+    const priceDisplay = item.pricing?.estimatedCost || item.pricing?.totalPrice || item.serviceId?.basePrice || 300;
+
+    return (
+      <div
+        key={item._id}
+        className="completed-job-list-item"
+        onClick={() => setSelectedJobModal(item)}
+      >
+        <div className="completed-job-icon-box">
+          <CheckCircle2 size={22} color="#15803d" />
+        </div>
+
+        <div className="completed-job-info">
+          <div className="completed-job-title-row">
+            <h3 className="completed-job-title">{item.title}</h3>
+            <span className="compact-category-pill">{categoryName}</span>
+            <span className="status-badge status-completed">Completed</span>
+          </div>
+
+          <div className="completed-job-meta-row">
+            <span><MapPin size={14} color="#64748b" /> {item.address || 'Address provided'}</span>
+            <span>•</span>
+            <span><Calendar size={14} color="#64748b" /> {formattedDate}</span>
+            {photoCount > 0 && (
+              <>
+                <span>•</span>
+                <span style={{ color: '#15803d', fontWeight: 600 }}><Camera size={14} color="#15803d" /> {photoCount} photo(s)</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="completed-job-right">
+          <div className="completed-job-price">₹{priceDisplay}</div>
+          <button
+            className="btn-card-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedJobModal(item);
+            }}
+          >
+            View Details
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-page">
       {/* Top Header Navigation */}
@@ -695,8 +765,8 @@ export default function UserDashboard() {
                 <p>Once your requested home services are completed and delivered, they will be archived here.</p>
               </div>
             ) : (
-              <div className="requests-grid">
-                {completedRequests.map(renderCompactCard)}
+              <div className="completed-requests-list">
+                {completedRequests.map(renderCompactListItem)}
               </div>
             )}
           </section>
