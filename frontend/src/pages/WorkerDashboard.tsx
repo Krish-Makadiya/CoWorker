@@ -1,22 +1,42 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Wrench, Briefcase, Search, User, MapPin, Calendar, Camera,
-  Loader2, Play, CheckCircle, RefreshCw, Clock,
-  Mail, Phone, Shield, Star, X, ChevronLeft, ChevronRight,
-  Maximize2, Images
-} from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import Navbar from '../components/Navbar';
-import { ROUTES } from '../config/api';
-import './Dashboard.css';
+  Wrench,
+  Briefcase,
+  Search,
+  User,
+  MapPin,
+  Calendar,
+  Camera,
+  Loader2,
+  Play,
+  CheckCircle,
+  RefreshCw,
+  Clock,
+  Mail,
+  Phone,
+  Shield,
+  Star,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Images,
+  CheckCircle2,
+  ShieldCheck,
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import Navbar from "../components/Navbar";
+import { ROUTES } from "../config/api";
+import "./Dashboard.css";
 
 interface ServiceRequest {
   _id: string;
   title: string;
   description: string;
   address: string;
-  status: 'open' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+  status: "open" | "accepted" | "in_progress" | "completed" | "cancelled";
   scheduledAt: string;
   createdAt: string;
   preServicePhotos?: string[];
@@ -35,15 +55,23 @@ interface ServiceRequest {
       mobileNumber?: string;
     };
   };
-  workerId?: string | {
-    _id?: string;
-    userId?: {
-      name?: string;
-    };
-  };
+  workerId?:
+    | string
+    | {
+        _id?: string;
+        userId?: {
+          name?: string;
+        };
+      };
 }
 
-function JobCardCarousel({ photos, onClick }: { photos?: string[]; onClick: () => void }) {
+function JobCardCarousel({
+  photos,
+  onClick,
+}: {
+  photos?: string[];
+  onClick: () => void;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -56,23 +84,33 @@ function JobCardCarousel({ photos, onClick }: { photos?: string[]; onClick: () =
 
   if (!photos || photos.length === 0) {
     return (
-      <div className="card-photo-carousel" onClick={onClick} style={{ cursor: 'pointer' }}>
+      <div
+        className="card-photo-carousel"
+        onClick={onClick}
+        style={{ cursor: "pointer" }}
+      >
         <div className="carousel-no-photos">
           <Camera size={32} opacity={0.4} />
-          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>No Pre-photos Attached</span>
+          <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>
+            No Pre-photos Attached
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card-photo-carousel" onClick={onClick} style={{ cursor: 'pointer' }}>
+    <div
+      className="card-photo-carousel"
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+    >
       {photos.map((photo, index) => (
         <img
           key={index}
           src={photo}
           alt={`Pre-photo ${index + 1}`}
-          className={index === currentIndex ? 'active' : ''}
+          className={index === currentIndex ? "active" : ""}
         />
       ))}
 
@@ -80,13 +118,15 @@ function JobCardCarousel({ photos, onClick }: { photos?: string[]; onClick: () =
         <>
           <div className="card-photo-count">
             <Camera size={12} />
-            <span>{currentIndex + 1}/{photos.length}</span>
+            <span>
+              {currentIndex + 1}/{photos.length}
+            </span>
           </div>
           <div className="carousel-dots" onClick={(e) => e.stopPropagation()}>
             {photos.map((_, index) => (
               <button
                 key={index}
-                className={`carousel-dot ${index === currentIndex ? 'active' : ''}`}
+                className={`carousel-dot ${index === currentIndex ? "active" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentIndex(index);
@@ -102,7 +142,9 @@ function JobCardCarousel({ photos, onClick }: { photos?: string[]; onClick: () =
 
 export default function WorkerDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'my-jobs' | 'available-jobs' | 'profile'>('my-jobs');
+  const [activeTab, setActiveTab] = useState<
+    "my-jobs" | "available-jobs" | "profile"
+  >("my-jobs");
 
   const [myJobs, setMyJobs] = useState<ServiceRequest[]>([]);
   const [availableJobs, setAvailableJobs] = useState<ServiceRequest[]>([]);
@@ -111,61 +153,73 @@ export default function WorkerDashboard() {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const [userData, setUserData] = useState<any>(null);
+  const [workerProfile, setWorkerProfile] = useState<any>(null);
 
-  const [selectedJobModal, setSelectedJobModal] = useState<ServiceRequest | null>(null);
-  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
+  const [selectedJobModal, setSelectedJobModal] =
+    useState<ServiceRequest | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    photos: string[];
+    index: number;
+  } | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!lightbox) return;
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setLightbox(null);
-      } else if (e.key === 'ArrowLeft' && lightbox.photos.length > 1) {
+      } else if (e.key === "ArrowLeft" && lightbox.photos.length > 1) {
         setLightbox((prev) =>
           prev
             ? {
                 ...prev,
-                index: (prev.index - 1 + prev.photos.length) % prev.photos.length
+                index:
+                  (prev.index - 1 + prev.photos.length) % prev.photos.length,
               }
-            : null
+            : null,
         );
-      } else if (e.key === 'ArrowRight' && lightbox.photos.length > 1) {
+      } else if (e.key === "ArrowRight" && lightbox.photos.length > 1) {
         setLightbox((prev) =>
           prev
             ? {
                 ...prev,
-                index: (prev.index + 1) % prev.photos.length
+                index: (prev.index + 1) % prev.photos.length,
               }
-            : null
+            : null,
         );
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightbox]);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    const userStr = localStorage.getItem('user');
+    const userId = localStorage.getItem("userId");
+    const userStr = localStorage.getItem("user");
 
     if (!userId || !userStr) {
-      toast.error('Please login first');
-      navigate('/login/worker');
+      toast.error("Please login first");
+      navigate("/login/worker");
       return;
     }
 
     try {
       const parsedUser = JSON.parse(userStr);
-      if (!parsedUser.roles?.includes('worker')) {
-        toast.error('Unauthorized access. Worker role required.');
-        navigate('/login/worker');
+      if (!parsedUser.roles?.includes("worker")) {
+        toast.error("Unauthorized access. Worker role required.");
+        navigate("/login/worker");
         return;
       }
       setUserData(parsedUser);
     } catch (e) {
-      navigate('/login/worker');
+      navigate("/login/worker");
       return;
+    }
+
+    const storedWorkerId = localStorage.getItem("userId");
+    console.log(storedWorkerId);
+    if (storedWorkerId) {
+      fetchWorkerProfile(storedWorkerId);
     }
 
     fetchAvailableJobs();
@@ -173,15 +227,36 @@ export default function WorkerDashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
-    toast.success('Logged out successfully.');
-    navigate('/', { replace: true });
+    toast.success("Logged out successfully.");
+    navigate("/", { replace: true });
   };
 
   const getAuthHeaders = (): Record<string, string> => {
-    const userId = localStorage.getItem('userId') || '';
+    const userId = localStorage.getItem("userId") || "";
     const headers: Record<string, string> = {};
-    if (userId) headers['user-id'] = userId;
+    if (userId) headers["user-id"] = userId;
     return headers;
+  };
+
+  const fetchWorkerProfile = async (id: string) => {
+    if (!id) return;
+    try {
+      const response = await fetch(ROUTES.worker.profile(id), {
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.success && data.worker) {
+        setWorkerProfile(data.worker);
+        if (data.worker._id) {
+          localStorage.setItem("workerId", data.worker._id);
+        }
+      }
+    } catch (error) {
+      console.error("Fetch worker profile error:", error);
+    }
   };
 
   const fetchAvailableJobs = async () => {
@@ -190,19 +265,19 @@ export default function WorkerDashboard() {
       const response = await fetch(`${ROUTES.serviceRequests}/available`, {
         headers: {
           ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
       const data = await response.json();
 
       if (response.ok && data.success) {
         setAvailableJobs(data.serviceRequests || []);
       } else {
-        toast.error(data.message || 'Failed to fetch available jobs');
+        toast.error(data.message || "Failed to fetch available jobs");
       }
     } catch (error) {
-      console.error('Fetch available jobs error:', error);
-      toast.error('Network error while fetching jobs');
+      console.error("Fetch available jobs error:", error);
+      toast.error("Network error while fetching jobs");
     } finally {
       setIsLoadingAvailable(false);
     }
@@ -211,30 +286,36 @@ export default function WorkerDashboard() {
   const handleAcceptJob = async (job: ServiceRequest) => {
     setActionLoadingId(job._id);
     try {
-      const response = await fetch(`${ROUTES.serviceRequests}/${job._id}/accept`, {
-        method: 'PATCH',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch(
+        `${ROUTES.serviceRequests}/${job._id}/accept`,
+        {
+          method: "PATCH",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+        },
+      );
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success('Job accepted successfully!');
-        const updatedJob = data.serviceRequest || { ...job, status: 'accepted' };
+        toast.success("Job accepted successfully!");
+        const updatedJob = data.serviceRequest || {
+          ...job,
+          status: "accepted",
+        };
 
         setAvailableJobs((prev) => prev.filter((j) => j._id !== job._id));
         setMyJobs((prev) => [updatedJob, ...prev]);
         if (selectedJobModal?._id === job._id) {
           setSelectedJobModal(null);
         }
-        setActiveTab('my-jobs');
+        setActiveTab("my-jobs");
       } else {
-        toast.error(data.message || 'Failed to accept job');
+        toast.error(data.message || "Failed to accept job");
       }
     } catch (error) {
-      toast.error('Network error');
+      toast.error("Network error");
     } finally {
       setActionLoadingId(null);
     }
@@ -244,26 +325,28 @@ export default function WorkerDashboard() {
     setActionLoadingId(jobId);
     try {
       const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/start`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
           ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success('Job started!');
+        toast.success("Job started!");
         setMyJobs((prev) =>
           prev.map((job) =>
-            job._id === jobId ? data.serviceRequest || { ...job, status: 'in_progress' } : job
-          )
+            job._id === jobId
+              ? data.serviceRequest || { ...job, status: "in_progress" }
+              : job,
+          ),
         );
       } else {
-        toast.error(data.message || 'Failed to start job');
+        toast.error(data.message || "Failed to start job");
       }
     } catch (error) {
-      toast.error('Network error');
+      toast.error("Network error");
     } finally {
       setActionLoadingId(null);
     }
@@ -272,27 +355,32 @@ export default function WorkerDashboard() {
   const handleCompleteJob = async (jobId: string) => {
     setActionLoadingId(jobId);
     try {
-      const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/complete`, {
-        method: 'PATCH',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch(
+        `${ROUTES.serviceRequests}/${jobId}/complete`,
+        {
+          method: "PATCH",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+        },
+      );
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success('Job marked as completed!');
+        toast.success("Job marked as completed!");
         setMyJobs((prev) =>
           prev.map((job) =>
-            job._id === jobId ? data.serviceRequest || { ...job, status: 'completed' } : job
-          )
+            job._id === jobId
+              ? data.serviceRequest || { ...job, status: "completed" }
+              : job,
+          ),
         );
       } else {
-        toast.error(data.message || 'Failed to complete job');
+        toast.error(data.message || "Failed to complete job");
       }
     } catch (error) {
-      toast.error('Network error');
+      toast.error("Network error");
     } finally {
       setActionLoadingId(null);
     }
@@ -301,48 +389,55 @@ export default function WorkerDashboard() {
   const handlePhotoUpload = async (jobId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    setActionLoadingId(jobId + '_upload');
+    setActionLoadingId(jobId + "_upload");
     const formData = new FormData();
     Array.from(files).forEach((file) => {
-      formData.append('photos', file);
+      formData.append("photos", file);
     });
 
     try {
-      const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/post-photos`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: formData
-      });
+      const response = await fetch(
+        `${ROUTES.serviceRequests}/${jobId}/post-photos`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData,
+        },
+      );
       const data = await response.json();
 
       if (response.ok && data.success) {
         toast.success(`${files.length} photo(s) uploaded successfully!`);
         setMyJobs((prev) =>
-          prev.map((job) => (job._id === jobId ? data.serviceRequest : job))
+          prev.map((job) => (job._id === jobId ? data.serviceRequest : job)),
         );
       } else {
-        toast.error(data.message || 'Failed to upload photos');
+        toast.error(data.message || "Failed to upload photos");
       }
     } catch (error) {
-      toast.error('Network error while uploading photos');
+      toast.error("Network error while uploading photos");
     } finally {
       setActionLoadingId(null);
     }
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not scheduled';
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
+    if (!dateString) return "Not scheduled";
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     });
   };
 
   return (
     <div className="dashboard-page">
-      <Navbar portalName="Worker Portal" portalIcon={Wrench} onLogout={handleLogout} />
+      <Navbar
+        portalName="Worker Portal"
+        portalIcon={Wrench}
+        onLogout={handleLogout}
+      />
       <div className="dashboard-container">
         <header className="customer-dashboard-header">
           <div className="customer-welcome">
@@ -352,8 +447,8 @@ export default function WorkerDashboard() {
 
           <div className="customer-tabs">
             <button
-              className={`customer-tab-btn ${activeTab === 'my-jobs' ? 'active' : ''}`}
-              onClick={() => setActiveTab('my-jobs')}
+              className={`customer-tab-btn ${activeTab === "my-jobs" ? "active" : ""}`}
+              onClick={() => setActiveTab("my-jobs")}
             >
               <Briefcase size={18} />
               My Jobs
@@ -361,12 +456,12 @@ export default function WorkerDashboard() {
                 <span
                   className="tab-badge"
                   style={{
-                    marginLeft: '8px',
-                    background: 'var(--primary)',
-                    color: 'white',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    fontSize: '12px'
+                    marginLeft: "8px",
+                    background: "var(--primary)",
+                    color: "white",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    fontSize: "12px",
                   }}
                 >
                   {myJobs.length}
@@ -374,9 +469,9 @@ export default function WorkerDashboard() {
               )}
             </button>
             <button
-              className={`customer-tab-btn ${activeTab === 'available-jobs' ? 'active' : ''}`}
+              className={`customer-tab-btn ${activeTab === "available-jobs" ? "active" : ""}`}
               onClick={() => {
-                setActiveTab('available-jobs');
+                setActiveTab("available-jobs");
                 fetchAvailableJobs();
               }}
             >
@@ -384,8 +479,8 @@ export default function WorkerDashboard() {
               Available Jobs
             </button>
             <button
-              className={`customer-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
+              className={`customer-tab-btn ${activeTab === "profile" ? "active" : ""}`}
+              onClick={() => setActiveTab("profile")}
             >
               <User size={18} />
               Profile
@@ -393,7 +488,7 @@ export default function WorkerDashboard() {
           </div>
         </header>
 
-        {activeTab === 'my-jobs' && (
+        {activeTab === "my-jobs" && (
           <div className="tab-content fade-in">
             {myJobs.length === 0 ? (
               <div className="empty-requests-state">
@@ -401,21 +496,23 @@ export default function WorkerDashboard() {
                   <Briefcase size={48} color="var(--primary-light-text)" />
                 </div>
                 <h3>No active jobs</h3>
-                <p>Browse available service requests to get started and earn.</p>
+                <p>
+                  Browse available service requests to get started and earn.
+                </p>
                 <button
                   className="worker-action-btn"
                   onClick={() => {
-                    setActiveTab('available-jobs');
+                    setActiveTab("available-jobs");
                     fetchAvailableJobs();
                   }}
                   style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem 1.5rem',
-                    background: 'var(--primary)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
+                    marginTop: "1rem",
+                    padding: "0.75rem 1.5rem",
+                    background: "var(--primary)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
                   }}
                 >
                   Browse Available Jobs
@@ -427,82 +524,160 @@ export default function WorkerDashboard() {
                   <div key={job._id} className="request-item-card">
                     <div className="request-main-info">
                       <div className="request-header-row">
-                        <h3 className="request-title">{job.title || job.serviceId?.name || 'Service Request'}</h3>
+                        <h3 className="request-title">
+                          {job.title ||
+                            job.serviceId?.name ||
+                            "Service Request"}
+                        </h3>
                         <span className={`status-badge status-${job.status}`}>
-                          {job.status.replace('_', ' ').toUpperCase()}
+                          {job.status.replace("_", " ").toUpperCase()}
                         </span>
                       </div>
 
-                      <p style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                      <p
+                        style={{
+                          color: "#4b5563",
+                          fontSize: "0.9rem",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
                         {job.description}
                       </p>
 
                       <div className="request-meta">
-                        <span className="meta-item"><MapPin size={16} /> {job.address}</span>
-                        <span className="meta-item"><Calendar size={16} /> {formatDate(job.scheduledAt)}</span>
-                        {job.serviceId?.category && <span className="meta-item"><Wrench size={16} /> {job.serviceId.category}</span>}
-                        {job.customerId?.userId?.name && <span className="meta-item"><User size={16} /> Customer: {job.customerId.userId.name}</span>}
+                        <span className="meta-item">
+                          <MapPin size={16} /> {job.address}
+                        </span>
+                        <span className="meta-item">
+                          <Calendar size={16} /> {formatDate(job.scheduledAt)}
+                        </span>
+                        {job.serviceId?.category && (
+                          <span className="meta-item">
+                            <Wrench size={16} /> {job.serviceId.category}
+                          </span>
+                        )}
+                        {job.customerId?.userId?.name && (
+                          <span className="meta-item">
+                            <User size={16} /> Customer:{" "}
+                            {job.customerId.userId.name}
+                          </span>
+                        )}
                       </div>
 
-                      {job.preServicePhotos && job.preServicePhotos.length > 0 && (
-                        <div className="request-photos-grid">
-                          <span className="photo-label">Pre-service Photos:</span>
-                          <div className="photos-row">
-                            {job.preServicePhotos.map((photo, idx) => (
-                              <img
-                                key={`pre-${idx}`}
-                                src={photo}
-                                alt="Pre-service"
-                                className="photo-thumb"
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => setLightbox({ photos: job.preServicePhotos!, index: idx })}
-                              />
-                            ))}
+                      {job.preServicePhotos &&
+                        job.preServicePhotos.length > 0 && (
+                          <div className="request-photos-grid">
+                            <span className="photo-label">
+                              Pre-service Photos:
+                            </span>
+                            <div className="photos-row">
+                              {job.preServicePhotos.map((photo, idx) => (
+                                <img
+                                  key={`pre-${idx}`}
+                                  src={photo}
+                                  alt="Pre-service"
+                                  className="photo-thumb"
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() =>
+                                    setLightbox({
+                                      photos: job.preServicePhotos!,
+                                      index: idx,
+                                    })
+                                  }
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {job.postServicePhotos && job.postServicePhotos.length > 0 && (
-                        <div className="request-photos-grid">
-                          <span className="photo-label">Post-service Photos:</span>
-                          <div className="photos-row">
-                            {job.postServicePhotos.map((photo, idx) => (
-                              <img
-                                key={`post-${idx}`}
-                                src={photo}
-                                alt="Post-service"
-                                className="photo-thumb"
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => setLightbox({ photos: job.postServicePhotos!, index: idx })}
-                              />
-                            ))}
+                      {job.postServicePhotos &&
+                        job.postServicePhotos.length > 0 && (
+                          <div className="request-photos-grid">
+                            <span className="photo-label">
+                              Post-service Photos:
+                            </span>
+                            <div className="photos-row">
+                              {job.postServicePhotos.map((photo, idx) => (
+                                <img
+                                  key={`post-${idx}`}
+                                  src={photo}
+                                  alt="Post-service"
+                                  className="photo-thumb"
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() =>
+                                    setLightbox({
+                                      photos: job.postServicePhotos!,
+                                      index: idx,
+                                    })
+                                  }
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                        {job.status === 'accepted' && (
+                      <div
+                        style={{
+                          marginTop: "1rem",
+                          display: "flex",
+                          gap: "0.75rem",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                        }}
+                      >
+                        {job.status === "accepted" && (
                           <button
                             className="worker-action-btn btn-start"
                             onClick={() => handleStartJob(job._id)}
                             disabled={actionLoadingId === job._id}
                           >
                             {actionLoadingId === job._id ? (
-                              <Loader2 className="spin" size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                              <Loader2
+                                className="spin"
+                                size={16}
+                                style={{
+                                  display: "inline",
+                                  verticalAlign: "text-bottom",
+                                }}
+                              />
                             ) : (
-                              <Play size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                              <Play
+                                size={16}
+                                style={{
+                                  display: "inline",
+                                  verticalAlign: "text-bottom",
+                                }}
+                              />
                             )}
                             Start Job
                           </button>
                         )}
 
-                        {job.status === 'in_progress' && (
+                        {job.status === "in_progress" && (
                           <>
-                            <label className="btn-upload-photo" htmlFor={`post-photo-${job._id}`}>
-                              {actionLoadingId === job._id + '_upload' ? (
-                                <Loader2 className="spin" size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                            <label
+                              className="btn-upload-photo"
+                              htmlFor={`post-photo-${job._id}`}
+                            >
+                              {actionLoadingId === job._id + "_upload" ? (
+                                <Loader2
+                                  className="spin"
+                                  size={14}
+                                  style={{
+                                    display: "inline",
+                                    verticalAlign: "text-bottom",
+                                    marginRight: "4px",
+                                  }}
+                                />
                               ) : (
-                                <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                                <Camera
+                                  size={14}
+                                  style={{
+                                    display: "inline",
+                                    verticalAlign: "text-bottom",
+                                    marginRight: "4px",
+                                  }}
+                                />
                               )}
                               Upload After Photos
                             </label>
@@ -511,9 +686,11 @@ export default function WorkerDashboard() {
                               type="file"
                               multiple
                               accept="image/*"
-                              style={{ display: 'none' }}
-                              onChange={(e) => handlePhotoUpload(job._id, e.target.files)}
-                              disabled={actionLoadingId === job._id + '_upload'}
+                              style={{ display: "none" }}
+                              onChange={(e) =>
+                                handlePhotoUpload(job._id, e.target.files)
+                              }
+                              disabled={actionLoadingId === job._id + "_upload"}
                             />
 
                             <button
@@ -522,18 +699,41 @@ export default function WorkerDashboard() {
                               disabled={actionLoadingId === job._id}
                             >
                               {actionLoadingId === job._id ? (
-                                <Loader2 className="spin" size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                                <Loader2
+                                  className="spin"
+                                  size={16}
+                                  style={{
+                                    display: "inline",
+                                    verticalAlign: "text-bottom",
+                                  }}
+                                />
                               ) : (
-                                <CheckCircle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                                <CheckCircle
+                                  size={16}
+                                  style={{
+                                    display: "inline",
+                                    verticalAlign: "text-bottom",
+                                  }}
+                                />
                               )}
                               Mark Complete
                             </button>
                           </>
                         )}
 
-                        {job.status === 'completed' && (
-                          <span className="status-badge status-completed" style={{ fontSize: '0.8rem' }}>
-                            <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                        {job.status === "completed" && (
+                          <span
+                            className="status-badge status-completed"
+                            style={{ fontSize: "0.8rem" }}
+                          >
+                            <CheckCircle
+                              size={14}
+                              style={{
+                                display: "inline",
+                                verticalAlign: "text-bottom",
+                                marginRight: "4px",
+                              }}
+                            />
                             Job Completed
                           </span>
                         )}
@@ -546,22 +746,38 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        {activeTab === 'available-jobs' && (
+        {activeTab === "available-jobs" && (
           <div className="tab-content fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
               <h2>Available Opportunities</h2>
               <button
                 onClick={fetchAvailableJobs}
                 className="customer-tab-btn"
-                style={{ padding: '0.5rem' }}
+                style={{ padding: "0.5rem" }}
                 disabled={isLoadingAvailable}
               >
-                <RefreshCw size={18} className={isLoadingAvailable ? 'spin' : ''} />
+                <RefreshCw
+                  size={18}
+                  className={isLoadingAvailable ? "spin" : ""}
+                />
               </button>
             </div>
 
             {isLoadingAvailable ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "3rem",
+                }}
+              >
                 <Loader2 size={32} className="spin" color="var(--primary)" />
               </div>
             ) : availableJobs.length === 0 ? (
@@ -579,7 +795,7 @@ export default function WorkerDashboard() {
                     key={job._id}
                     className="service-card"
                     onClick={() => setSelectedJobModal(job)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   >
                     <JobCardCarousel
                       photos={job.preServicePhotos}
@@ -587,30 +803,52 @@ export default function WorkerDashboard() {
                     />
 
                     <div className="service-card-header">
-                      <h3 className="service-card-title">{job.title || job.serviceId?.name}</h3>
+                      <h3 className="service-card-title">
+                        {job.title || job.serviceId?.name}
+                      </h3>
                       {job.serviceId?.category && (
-                        <span className="service-card-category">{job.serviceId.category}</span>
-                      )}
-                    </div>
-
-                    <p className="service-card-desc" style={{ flex: 1 }}>{job.description}</p>
-
-                    <div
-                      className="request-meta"
-                      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '0.75rem 0' }}
-                    >
-                      <span className="meta-item"><MapPin size={16} /> {job.address}</span>
-                      <span className="meta-item"><Calendar size={16} /> {formatDate(job.scheduledAt)}</span>
-                      {job.preServicePhotos && job.preServicePhotos.length > 0 && (
-                        <span className="meta-item" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                          <Images size={16} /> {job.preServicePhotos.length} Pre-photo(s) attached
+                        <span className="service-card-category">
+                          {job.serviceId.category}
                         </span>
                       )}
                     </div>
 
+                    <p className="service-card-desc" style={{ flex: 1 }}>
+                      {job.description}
+                    </p>
+
+                    <div
+                      className="request-meta"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        margin: "0.75rem 0",
+                      }}
+                    >
+                      <span className="meta-item">
+                        <MapPin size={16} /> {job.address}
+                      </span>
+                      <span className="meta-item">
+                        <Calendar size={16} /> {formatDate(job.scheduledAt)}
+                      </span>
+                      {job.preServicePhotos &&
+                        job.preServicePhotos.length > 0 && (
+                          <span
+                            className="meta-item"
+                            style={{ color: "var(--primary)", fontWeight: 600 }}
+                          >
+                            <Images size={16} /> {job.preServicePhotos.length}{" "}
+                            Pre-photo(s) attached
+                          </span>
+                        )}
+                    </div>
+
                     <div className="service-card-footer">
                       <div className="service-price">
-                        {job.serviceId?.basePrice ? `₹${job.serviceId.basePrice}` : 'Price TBD'}
+                        {job.serviceId?.basePrice
+                          ? `₹${job.serviceId.basePrice}`
+                          : "Price TBD"}
                       </div>
                       <button
                         className="btn-book-service"
@@ -620,7 +858,11 @@ export default function WorkerDashboard() {
                         }}
                         disabled={actionLoadingId === job._id}
                       >
-                        {actionLoadingId === job._id ? <Loader2 className="spin" size={16} /> : 'Accept Job'}
+                        {actionLoadingId === job._id ? (
+                          <Loader2 className="spin" size={16} />
+                        ) : (
+                          "Accept Job"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -630,75 +872,289 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        {activeTab === 'profile' && userData && (
+        {activeTab === "profile" && userData && (
           <section>
             <div className="worker-stats-row">
               <div className="worker-stat-item">
-                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'completed').length}</div>
+                <div className="worker-stat-number">
+                  {myJobs.filter((j) => j.status === "completed").length}
+                </div>
                 <div className="worker-stat-label">Completed</div>
               </div>
               <div className="worker-stat-item">
-                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'in_progress').length}</div>
+                <div className="worker-stat-number">
+                  {myJobs.filter((j) => j.status === "in_progress").length}
+                </div>
                 <div className="worker-stat-label">In Progress</div>
               </div>
               <div className="worker-stat-item">
-                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'accepted').length}</div>
+                <div className="worker-stat-number">
+                  {myJobs.filter((j) => j.status === "accepted").length}
+                </div>
                 <div className="worker-stat-label">Accepted</div>
               </div>
             </div>
 
             <div className="worker-profile-card">
-              <div className="worker-profile-header">
-                <div className="worker-avatar">
-                  {userData.name ? userData.name.charAt(0).toUpperCase() : 'W'}
-                </div>
-                <h2 className="worker-profile-name">{userData.name}</h2>
-                <span className="worker-profile-role-badge">
-                  <Shield size={13} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Worker
-                </span>
-              </div>
+              {(() => {
+                const verificationStatus: "verified" | "pending" | "rejected" =
+                  workerProfile?.verification ||
+                  userData?.verification ||
+                  userData?.workerProfile?.verification;
 
-              <div className="worker-profile-info">
-                <div className="worker-profile-field">
-                  <Mail size={18} />
-                  <div className="worker-profile-field-content">
-                    <span className="worker-profile-label">Email Address</span>
-                    <span className="worker-profile-value">{userData.email}</span>
-                  </div>
-                </div>
+                return (
+                  <>
+                    <div className="worker-profile-header">
+                      <div
+                        className="worker-avatar"
+                        style={{ position: "relative" }}
+                      >
+                        {userData.name
+                          ? userData.name.charAt(0).toUpperCase()
+                          : "W"}
+                        {verificationStatus === "verified" && (
+                          <div
+                            title="Verified Worker"
+                            style={{
+                              position: "absolute",
+                              bottom: "-2px",
+                              right: "-2px",
+                              background: "#10b981",
+                              color: "white",
+                              borderRadius: "50%",
+                              width: "24px",
+                              height: "24px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "2px solid white",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                            }}
+                          >
+                            <CheckCircle2 size={14} />
+                          </div>
+                        )}
+                      </div>
+                      <h2 className="worker-profile-name">{userData.name}</h2>
 
-                <div className="worker-profile-field">
-                  <Phone size={18} />
-                  <div className="worker-profile-field-content">
-                    <span className="worker-profile-label">Mobile Number</span>
-                    <span className="worker-profile-value">{userData.mobileNumber || 'Not provided'}</span>
-                  </div>
-                </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          flexWrap: "wrap",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span className="worker-profile-role-badge">
+                          <Shield
+                            size={13}
+                            style={{
+                              display: "inline",
+                              verticalAlign: "text-bottom",
+                              marginRight: "4px",
+                            }}
+                          />{" "}
+                          Worker
+                        </span>
 
-                <div className="worker-profile-field">
-                  <Star size={18} />
-                  <div className="worker-profile-field-content">
-                    <span className="worker-profile-label">Role</span>
-                    <span className="worker-profile-value">{(userData.roles || []).join(', ') || 'Worker'}</span>
-                  </div>
-                </div>
-
-                {userData.createdAt && (
-                  <div className="worker-profile-field">
-                    <Clock size={18} />
-                    <div className="worker-profile-field-content">
-                      <span className="worker-profile-label">Member Since</span>
-                      <span className="worker-profile-value">
-                        {new Date(userData.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
+                        {verificationStatus === "verified" && (
+                          <span
+                            className="worker-verification-badge verified"
+                            style={{ marginTop: 0 }}
+                          >
+                            <ShieldCheck
+                              size={13}
+                              style={{
+                                display: "inline",
+                                verticalAlign: "text-bottom",
+                                marginRight: "4px",
+                              }}
+                            />{" "}
+                            Verified
+                          </span>
+                        )}
+                        {verificationStatus === "pending" && (
+                          <span
+                            className="worker-verification-badge pending"
+                            style={{ marginTop: 0 }}
+                          >
+                            <Clock
+                              size={13}
+                              style={{
+                                display: "inline",
+                                verticalAlign: "text-bottom",
+                                marginRight: "4px",
+                              }}
+                            />{" "}
+                            Verification Pending
+                          </span>
+                        )}
+                        {verificationStatus === "rejected" && (
+                          <span
+                            className="worker-verification-badge rejected"
+                            style={{ marginTop: 0 }}
+                          >
+                            <AlertCircle
+                              size={13}
+                              style={{
+                                display: "inline",
+                                verticalAlign: "text-bottom",
+                                marginRight: "4px",
+                              }}
+                            />{" "}
+                            Verification Rejected
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+
+                    <div className="worker-profile-info">
+                      <div className="worker-profile-field">
+                        <ShieldCheck
+                          size={18}
+                          color={
+                            verificationStatus === "verified"
+                              ? "#10b981"
+                              : verificationStatus === "pending"
+                                ? "#f59e0b"
+                                : "#ef4444"
+                          }
+                        />
+                        <div className="worker-profile-field-content">
+                          <span className="worker-profile-label">
+                            Verification Status
+                          </span>
+                          <span className="worker-profile-value">
+                            <span
+                              className={`status-badge ${
+                                verificationStatus === "verified"
+                                  ? "status-completed"
+                                  : verificationStatus === "pending"
+                                    ? "status-accepted"
+                                    : "status-cancelled"
+                              }`}
+                              style={{
+                                fontSize: "0.78rem",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {verificationStatus === "verified" && (
+                                <CheckCircle2 size={12} />
+                              )}
+                              {verificationStatus === "pending" && (
+                                <Clock size={12} />
+                              )}
+                              {verificationStatus === "rejected" && (
+                                <AlertCircle size={12} />
+                              )}
+                              {verificationStatus.toUpperCase()}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="worker-profile-field">
+                        <Mail size={18} />
+                        <div className="worker-profile-field-content">
+                          <span className="worker-profile-label">
+                            Email Address
+                          </span>
+                          <span className="worker-profile-value">
+                            {userData.email}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="worker-profile-field">
+                        <Phone size={18} />
+                        <div className="worker-profile-field-content">
+                          <span className="worker-profile-label">
+                            Mobile Number
+                          </span>
+                          <span className="worker-profile-value">
+                            {userData.mobileNumber || "Not provided"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {workerProfile?.cooperativeId?.name && (
+                        <div className="worker-profile-field">
+                          <Shield size={18} />
+                          <div className="worker-profile-field-content">
+                            <span className="worker-profile-label">
+                              Cooperative
+                            </span>
+                            <span className="worker-profile-value">
+                              {workerProfile.cooperativeId.name}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {workerProfile?.skills &&
+                        workerProfile.skills.length > 0 && (
+                          <div className="worker-profile-field">
+                            <Wrench size={18} />
+                            <div className="worker-profile-field-content">
+                              <span className="worker-profile-label">
+                                Skills & Trades
+                              </span>
+                              <span className="worker-profile-value">
+                                {workerProfile.skills.join(", ")}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                      {workerProfile?.rating !== undefined && (
+                        <div className="worker-profile-field">
+                          <Star size={18} color="#f59e0b" />
+                          <div className="worker-profile-field-content">
+                            <span className="worker-profile-label">Rating</span>
+                            <span className="worker-profile-value">
+                              ⭐ {workerProfile.rating} / 5.0
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="worker-profile-field">
+                        <Star size={18} />
+                        <div className="worker-profile-field-content">
+                          <span className="worker-profile-label">Role</span>
+                          <span className="worker-profile-value">
+                            {(userData.roles || []).join(", ") || "Worker"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {userData.createdAt && (
+                        <div className="worker-profile-field">
+                          <Clock size={18} />
+                          <div className="worker-profile-field-content">
+                            <span className="worker-profile-label">
+                              Member Since
+                            </span>
+                            <span className="worker-profile-value">
+                              {new Date(userData.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                },
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -706,20 +1162,41 @@ export default function WorkerDashboard() {
 
       {/* Job Details Modal */}
       {selectedJobModal && (
-        <div className="job-detail-overlay" onClick={() => setSelectedJobModal(null)}>
-          <div className="job-detail-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="job-detail-overlay"
+          onClick={() => setSelectedJobModal(null)}
+        >
+          <div
+            className="job-detail-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="job-detail-header">
               <div>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-                  {selectedJobModal.title || selectedJobModal.serviceId?.name || 'Service Details'}
+                <h2
+                  style={{
+                    fontSize: "1.3rem",
+                    fontWeight: 800,
+                    margin: 0,
+                    color: "var(--text-main)",
+                  }}
+                >
+                  {selectedJobModal.title ||
+                    selectedJobModal.serviceId?.name ||
+                    "Service Details"}
                 </h2>
                 {selectedJobModal.serviceId?.category && (
-                  <span className="service-card-category" style={{ marginTop: '4px', display: 'inline-block' }}>
+                  <span
+                    className="service-card-category"
+                    style={{ marginTop: "4px", display: "inline-block" }}
+                  >
                     {selectedJobModal.serviceId.category}
                   </span>
                 )}
               </div>
-              <button className="job-detail-close" onClick={() => setSelectedJobModal(null)}>
+              <button
+                className="job-detail-close"
+                onClick={() => setSelectedJobModal(null)}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -729,41 +1206,55 @@ export default function WorkerDashboard() {
               <div>
                 <h3
                   style={{
-                    fontSize: '1rem',
+                    fontSize: "1rem",
                     fontWeight: 700,
-                    marginBottom: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    color: 'var(--text-main)'
+                    marginBottom: "0.75rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    color: "var(--text-main)",
                   }}
                 >
-                  <Camera size={18} color="var(--primary)" /> Pre-Service Photos Gallery
+                  <Camera size={18} color="var(--primary)" /> Pre-Service Photos
+                  Gallery
                 </h3>
-                {selectedJobModal.preServicePhotos && selectedJobModal.preServicePhotos.length > 0 ? (
+                {selectedJobModal.preServicePhotos &&
+                selectedJobModal.preServicePhotos.length > 0 ? (
                   <div className="job-detail-gallery">
                     {selectedJobModal.preServicePhotos.map((photo, idx) => (
-                      <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+                      <div
+                        key={idx}
+                        style={{
+                          position: "relative",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                        }}
+                      >
                         <img
                           src={photo}
                           alt={`Pre photo ${idx + 1}`}
-                          onClick={() => setLightbox({ photos: selectedJobModal.preServicePhotos!, index: idx })}
+                          onClick={() =>
+                            setLightbox({
+                              photos: selectedJobModal.preServicePhotos!,
+                              index: idx,
+                            })
+                          }
                         />
                         <div
                           style={{
-                            position: 'absolute',
-                            bottom: '6px',
-                            right: '6px',
-                            background: 'rgba(0,0,0,0.65)',
-                            color: 'white',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.72rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            pointerEvents: 'none',
-                            backdropFilter: 'blur(2px)'
+                            position: "absolute",
+                            bottom: "6px",
+                            right: "6px",
+                            background: "rgba(0,0,0,0.65)",
+                            color: "white",
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.72rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            pointerEvents: "none",
+                            backdropFilter: "blur(2px)",
                           }}
                         >
                           <Maximize2 size={12} /> Click to enlarge
@@ -774,12 +1265,12 @@ export default function WorkerDashboard() {
                 ) : (
                   <div
                     style={{
-                      padding: '2rem',
-                      textAlign: 'center',
-                      background: 'var(--bg-input)',
-                      border: '1px dashed var(--border-color)',
-                      borderRadius: '10px',
-                      color: 'var(--text-muted)'
+                      padding: "2rem",
+                      textAlign: "center",
+                      background: "var(--bg-input)",
+                      border: "1px dashed var(--border-color)",
+                      borderRadius: "10px",
+                      color: "var(--text-muted)",
                     }}
                   >
                     No pre-service photos uploaded for this job request.
@@ -789,46 +1280,80 @@ export default function WorkerDashboard() {
 
               {/* Job Details Section */}
               <div className="job-detail-info">
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)' }}>
+                <h3
+                  style={{
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    marginBottom: "0.5rem",
+                    color: "var(--text-main)",
+                  }}
+                >
                   Job Description & Requirements
                 </h3>
-                <p style={{ color: 'var(--text-main)', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
+                <p
+                  style={{
+                    color: "var(--text-main)",
+                    lineHeight: "1.5",
+                    whiteSpace: "pre-line",
+                  }}
+                >
                   {selectedJobModal.description}
                 </p>
 
                 <div
                   className="job-detail-meta"
                   style={{
-                    marginTop: '1rem',
-                    padding: '1.25rem',
-                    background: 'var(--bg-input)',
-                    borderRadius: '10px',
-                    gap: '0.75rem',
-                    border: '1px solid var(--border-color)'
+                    marginTop: "1rem",
+                    padding: "1.25rem",
+                    background: "var(--bg-input)",
+                    borderRadius: "10px",
+                    gap: "0.75rem",
+                    border: "1px solid var(--border-color)",
                   }}
                 >
                   <div
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderBottom: '1px solid var(--border-color)',
-                      paddingBottom: '0.75rem'
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderBottom: "1px solid var(--border-color)",
+                      paddingBottom: "0.75rem",
                     }}
                   >
-                    <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Offered Price:</span>
-                    <span className="service-price" style={{ fontSize: '1.25rem' }}>
-                      {selectedJobModal.serviceId?.basePrice ? `₹${selectedJobModal.serviceId.basePrice}` : 'Price TBD'}
+                    <span
+                      style={{ fontWeight: 600, color: "var(--text-muted)" }}
+                    >
+                      Offered Price:
+                    </span>
+                    <span
+                      className="service-price"
+                      style={{ fontSize: "1.25rem" }}
+                    >
+                      {selectedJobModal.serviceId?.basePrice
+                        ? `₹${selectedJobModal.serviceId.basePrice}`
+                        : "Price TBD"}
                     </span>
                   </div>
 
-                  <div className="meta-item"><MapPin size={16} /> <strong>Location:</strong> {selectedJobModal.address}</div>
-                  <div className="meta-item"><Calendar size={16} /> <strong>Scheduled Date:</strong> {formatDate(selectedJobModal.scheduledAt)}</div>
+                  <div className="meta-item">
+                    <MapPin size={16} /> <strong>Location:</strong>{" "}
+                    {selectedJobModal.address}
+                  </div>
+                  <div className="meta-item">
+                    <Calendar size={16} /> <strong>Scheduled Date:</strong>{" "}
+                    {formatDate(selectedJobModal.scheduledAt)}
+                  </div>
                   {selectedJobModal.customerId?.userId?.name && (
-                    <div className="meta-item"><User size={16} /> <strong>Customer Name:</strong> {selectedJobModal.customerId.userId.name}</div>
+                    <div className="meta-item">
+                      <User size={16} /> <strong>Customer Name:</strong>{" "}
+                      {selectedJobModal.customerId.userId.name}
+                    </div>
                   )}
                   {selectedJobModal.customerId?.userId?.mobileNumber && (
-                    <div className="meta-item"><Phone size={16} /> <strong>Customer Contact:</strong> {selectedJobModal.customerId.userId.mobileNumber}</div>
+                    <div className="meta-item">
+                      <Phone size={16} /> <strong>Customer Contact:</strong>{" "}
+                      {selectedJobModal.customerId.userId.mobileNumber}
+                    </div>
                   )}
                 </div>
               </div>
@@ -838,7 +1363,7 @@ export default function WorkerDashboard() {
               <button
                 className="customer-tab-btn"
                 onClick={() => setSelectedJobModal(null)}
-                style={{ marginRight: '0.75rem' }}
+                style={{ marginRight: "0.75rem" }}
               >
                 Close
               </button>
@@ -847,7 +1372,11 @@ export default function WorkerDashboard() {
                 onClick={() => handleAcceptJob(selectedJobModal)}
                 disabled={actionLoadingId === selectedJobModal._id}
               >
-                {actionLoadingId === selectedJobModal._id ? <Loader2 className="spin" size={16} /> : 'Accept Job'}
+                {actionLoadingId === selectedJobModal._id ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  "Accept Job"
+                )}
               </button>
             </div>
           </div>
@@ -856,14 +1385,20 @@ export default function WorkerDashboard() {
 
       {/* Lightbox / Fullscreen Image Modal */}
       {lightbox && (
-        <div className="photo-lightbox-overlay" onClick={() => setLightbox(null)}>
+        <div
+          className="photo-lightbox-overlay"
+          onClick={() => setLightbox(null)}
+        >
           <img
             src={lightbox.photos[lightbox.index]}
             alt={`Full view ${lightbox.index + 1}`}
             onClick={(e) => e.stopPropagation()}
           />
 
-          <button className="photo-lightbox-close" onClick={() => setLightbox(null)}>
+          <button
+            className="photo-lightbox-close"
+            onClick={() => setLightbox(null)}
+          >
             <X size={24} />
           </button>
 
@@ -877,9 +1412,11 @@ export default function WorkerDashboard() {
                     prev
                       ? {
                           ...prev,
-                          index: (prev.index - 1 + prev.photos.length) % prev.photos.length
+                          index:
+                            (prev.index - 1 + prev.photos.length) %
+                            prev.photos.length,
                         }
-                      : null
+                      : null,
                   );
                 }}
               >
@@ -894,9 +1431,9 @@ export default function WorkerDashboard() {
                     prev
                       ? {
                           ...prev,
-                          index: (prev.index + 1) % prev.photos.length
+                          index: (prev.index + 1) % prev.photos.length,
                         }
-                      : null
+                      : null,
                   );
                 }}
               >
@@ -905,19 +1442,19 @@ export default function WorkerDashboard() {
 
               <div
                 style={{
-                  position: 'absolute',
-                  bottom: '1.5rem',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'rgba(0, 0, 0, 0.75)',
-                  color: 'white',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
+                  position: "absolute",
+                  bottom: "1.5rem",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "rgba(0, 0, 0, 0.75)",
+                  color: "white",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "0.85rem",
                   fontWeight: 600,
-                  letterSpacing: '0.05em',
+                  letterSpacing: "0.05em",
                   zIndex: 2020,
-                  pointerEvents: 'none'
+                  pointerEvents: "none",
                 }}
               >
                 {lightbox.index + 1} / {lightbox.photos.length}
@@ -929,4 +1466,3 @@ export default function WorkerDashboard() {
     </div>
   );
 }
-
