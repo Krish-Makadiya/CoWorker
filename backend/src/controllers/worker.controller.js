@@ -441,6 +441,48 @@ const getWorkerById = async (req, res) => {
   });
 };
 
+const getWorkerPublicProfile = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    throwIfErrors(["Invalid worker ID"]);
+  }
+
+  const worker = await Worker.findOne({
+    $or: [{ _id: req.params.id }, { userId: req.params.id }],
+  })
+    .populate("userId", "name")
+    .populate("cooperativeId", "name location");
+
+  if (!worker) {
+    return res.status(404).json({
+      success: false,
+      message: "Worker not found",
+    });
+  }
+
+  const publicProfile = {
+    _id: worker._id,
+    name: worker.userId?.name || "Anonymous Worker",
+    skills: worker.skills || [],
+    experience: worker.experience || 0,
+    certifications: worker.certifications || [],
+    verification: worker.verification || "pending",
+    rating: worker.rating || 0,
+    cooperative: worker.cooperativeId
+      ? {
+          _id: worker.cooperativeId._id,
+          name: worker.cooperativeId.name,
+          location: worker.cooperativeId.location,
+        }
+      : null,
+    createdAt: worker.createdAt,
+  };
+
+  res.status(200).json({
+    success: true,
+    worker: publicProfile,
+  });
+};
+
 export {
   registerWorker,
   loginWorker,
@@ -450,4 +492,5 @@ export {
   verifyWorker,
   registerWorkerByCooperative,
   getWorkerById,
+  getWorkerPublicProfile,
 };

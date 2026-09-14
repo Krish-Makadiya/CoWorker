@@ -302,6 +302,21 @@ describe("GET /worker/:id Ownership & Cooperative Association Logic", () => {
   });
 });
 
+describe("GET /worker/:id/public Public Profile Logic", () => {
+  test("returns worker public profile with limited non-sensitive info", async () => {
+    const res = await request(app)
+      .get(`/worker/${MOCK_IDS.targetWorker}/public`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.worker._id).toBe(MOCK_IDS.targetWorker);
+    expect(res.body.worker.name).toBeDefined();
+    expect(res.body.worker.email).toBeUndefined();
+    expect(res.body.worker.mobileNumber).toBeUndefined();
+    expect(res.body.worker.address).toBeUndefined();
+  });
+});
+
 describe("GET worker ongoing & previous services logic", () => {
   test("allows worker to view ongoing services via worker ID", async () => {
     const res = await request(app)

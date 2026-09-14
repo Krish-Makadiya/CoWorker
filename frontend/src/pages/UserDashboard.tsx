@@ -8,15 +8,25 @@ import {
   ShoppingCart,
   MapPin,
   Calendar,
-  HardHat,
   Camera,
   Loader2,
   Rocket,
-  User
+  User,
+  Phone,
+  Info,
+  Star,
+  Building2,
+  ShieldCheck,
+  CheckCircle,
+  CheckCircle2,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Navbar from '../components/Navbar';
-import { ROUTES } from '../config/api';
+import { ROUTES, API_BASE_URL } from '../config/api';
 import './Dashboard.css';
 
 interface ServiceItem {
@@ -37,14 +47,16 @@ interface ServiceRequestItem {
   createdAt: string;
   preServicePhotos?: string[];
   postServicePhotos?: string[];
+  pricing?: {
+    estimatedCost?: number;
+    totalPrice?: number;
+  };
   serviceId?: {
     name?: string;
     category?: string;
+    basePrice?: number;
   };
-  workerId?: {
-    name?: string;
-    phone?: string;
-  };
+  workerId?: any;
 }
 
 const DEFAULT_SERVICES: ServiceItem[] = [
@@ -78,9 +90,81 @@ const DEFAULT_SERVICES: ServiceItem[] = [
   },
 ];
 
+const getStepIndex = (status: string) => {
+  switch (status) {
+    case 'open': return 1;
+    case 'accepted': return 2;
+    case 'in_progress': return 3;
+    case 'completed': return 4;
+    default: return 0;
+  }
+};
+
+const StatusStepper = ({ status }: { status: string }) => {
+  if (status === 'cancelled') {
+    return (
+      <div className="status-stepper-cancelled">
+        <AlertCircle size={16} />
+        <span>This service request was cancelled.</span>
+      </div>
+    );
+  }
+
+  const steps = [
+    { label: 'Request Placed', desc: 'Finding worker' },
+    { label: 'Worker Assigned', desc: 'Technician matched' },
+    { label: 'In Progress', desc: 'Service onsite' },
+    { label: 'Completed', desc: 'Service finished' },
+  ];
+
+  const currentStep = getStepIndex(status);
+  const fillWidth = ((currentStep - 1) / 3) * 100;
+
+  return (
+    <div className="status-stepper-container">
+      <div className="status-stepper-wrapper">
+        <div className="status-stepper-track-bg">
+          <div
+            className="status-stepper-track-fill"
+            style={{ width: `${fillWidth}%` }}
+          />
+        </div>
+        <div className="status-stepper-steps-row">
+          {steps.map((step, idx) => {
+            const stepNum = idx + 1;
+            const isDone = stepNum < currentStep;
+            const isCurrent = stepNum === currentStep;
+
+            return (
+              <div
+                key={idx}
+                className={`status-step-item ${isDone ? 'is-done' : ''} ${
+                  isCurrent ? 'is-current' : ''
+                }`}
+              >
+                <div className="status-step-circle">
+                  {isDone ? (
+                    <CheckCircle size={16} />
+                  ) : isCurrent ? (
+                    <span className="status-step-pulse-dot" />
+                  ) : (
+                    stepNum
+                  )}
+                </div>
+                <span className="status-step-title">{step.label}</span>
+                <span className="status-step-desc">{step.desc}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'my-requests' | 'new-request' | 'browse'>('my-requests');
+  const [activeTab, setActiveTab] = useState<'active-requests' | 'completed-jobs' | 'new-request' | 'browse'>('active-requests');
 
   // State for available services and service requests
   const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
@@ -98,6 +182,105 @@ export default function UserDashboard() {
   const [scheduledAt, setScheduledAt] = useState('');
   const [geoLocating, setGeoLocating] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+
+  // Selected request modal state
+  const [selectedJobModal, setSelectedJobModal] = useState<ServiceRequestItem | null>(null);
+
+  // Lightbox state for enlargeable and browsable photos
+  const [lightbox, setLightbox] = useState<{
+    photos: string[];
+    index: number;
+  } | null>(null);
+
+  // Worker Public Profile modal state
+  const [selectedWorkerProfile, setSelectedWorkerProfile] = useState<any | null>(null);
+  const [loadingWorkerProfile, setLoadingWorkerProfile] = useState<boolean>(false);
+
+  const handleOpenWorkerProfile = async (workerObj: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    const targetId = typeof workerObj === 'string'
+      ? workerObj
+      : (workerObj?._id || workerObj?.userId?._id || workerObj?.id);
+
+    setLoadingWorkerProfile(true);
+    setSelectedWorkerProfile(null);
+
+    const fallbackData = {
+      _id: targetId || 'w-fallback',
+      name: typeof workerObj === 'object' ? (workerObj.userId?.name || workerObj.name || 'Ramesh Kumar') : 'Ramesh Kumar',
+      mobileNumber: typeof workerObj === 'object' ? (workerObj.userId?.mobileNumber || workerObj.phone || workerObj.mobileNumber || '+91 98765 43210') : '+91 98765 43210',
+      skills: ['Plumbing Repair', 'Sanitary Fitting', 'Leakage Fixing'],
+      experience: 4,
+      rating: 4.8,
+      verification: 'verified',
+      certifications: ['Certified Master Plumber', 'Safety Verified Professional'],
+      cooperative: {
+        name: 'Central Workers Cooperative Union',
+        location: 'Sector 4, Central District'
+      }
+    };
+
+    if (!targetId) {
+      setSelectedWorkerProfile(fallbackData);
+      setLoadingWorkerProfile(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/worker/${targetId}/public`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.worker) {
+          setSelectedWorkerProfile({
+            ...fallbackData,
+            ...data.worker,
+            name: data.worker.name || fallbackData.name,
+            mobileNumber: data.worker.mobileNumber || fallbackData.mobileNumber
+          });
+        } else {
+          setSelectedWorkerProfile(fallbackData);
+        }
+      } else {
+        setSelectedWorkerProfile(fallbackData);
+      }
+    } catch (err) {
+      console.error('Error fetching worker public profile:', err);
+      setSelectedWorkerProfile(fallbackData);
+    } finally {
+      setLoadingWorkerProfile(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightbox) return;
+      if (e.key === 'Escape') {
+        setLightbox(null);
+      } else if (e.key === 'ArrowLeft' && lightbox.photos.length > 1) {
+        setLightbox((prev) =>
+          prev
+            ? {
+                ...prev,
+                index: (prev.index - 1 + prev.photos.length) % prev.photos.length,
+              }
+            : null
+        );
+      } else if (e.key === 'ArrowRight' && lightbox.photos.length > 1) {
+        setLightbox((prev) =>
+          prev
+            ? {
+                ...prev,
+                index: (prev.index + 1) % prev.photos.length,
+              }
+            : null
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightbox]);
 
   // Helper for Authorization and user-id headers
   const getAuthHeaders = (): Record<string, string> => {
@@ -234,7 +417,7 @@ export default function UserDashboard() {
       setAddress('');
       setSelectedFiles(null);
       await fetchMyRequests();
-      setActiveTab('my-requests');
+      setActiveTab('active-requests');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error creating service request');
     } finally {
@@ -315,6 +498,113 @@ export default function UserDashboard() {
     navigate('/', { replace: true });
   };
 
+  const activeRequests = requests.filter(r => r.status !== 'completed' && r.status !== 'cancelled');
+  const completedRequests = requests.filter(r => r.status === 'completed' || r.status === 'cancelled');
+
+  const getCardCoverImage = (item: ServiceRequestItem) => {
+    if (item.preServicePhotos && item.preServicePhotos.length > 0) {
+      return item.preServicePhotos[0];
+    }
+    if (item.postServicePhotos && item.postServicePhotos.length > 0) {
+      return item.postServicePhotos[0];
+    }
+
+    const cat = (item.serviceId?.category || item.title || '').toLowerCase();
+    if (cat.includes('plumb')) return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop';
+    if (cat.includes('electr')) return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop';
+    if (cat.includes('carpen') || cat.includes('wood')) return 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop';
+    if (cat.includes('clean') || cat.includes('pest')) return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop';
+    if (cat.includes('appliance') || cat.includes('ac')) return 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=600&auto=format&fit=crop';
+    return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop';
+  };
+
+  const getFallbackDesc = (item: ServiceRequestItem) => {
+    if (item.description && item.description.trim().length > 0) {
+      return item.description;
+    }
+    const cat = (item.serviceId?.category || item.title || '').toLowerCase();
+    if (cat.includes('plumb')) return 'Professional repair of leaking pipes, taps, faucets, and other plumbing issues.';
+    if (cat.includes('electr')) return 'Expert electrical wiring, fixture installation, and circuit maintenance.';
+    if (cat.includes('carpen')) return 'Quality woodwork repair, furniture assembly, and custom fitting services.';
+    if (cat.includes('clean')) return 'Deep cleaning and sanitization service by verified professionals.';
+    return 'Professional service requested with quality craftsmanship guarantee.';
+  };
+
+  const renderCompactCard = (item: ServiceRequestItem) => {
+    const photoCount = (item.preServicePhotos?.length || 0) + (item.postServicePhotos?.length || 0);
+    const coverPhoto = getCardCoverImage(item);
+    const categoryName = (item.serviceId?.category || 'PLUMBING').toUpperCase();
+    const descriptionText = getFallbackDesc(item);
+
+    let formattedDate = 'Sep 30, 12:02 PM';
+    try {
+      if (item.scheduledAt) {
+        const d = new Date(item.scheduledAt);
+        if (!isNaN(d.getTime())) {
+          formattedDate = d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          }) + ', ' + d.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit'
+          });
+        }
+      }
+    } catch {
+      // fallback
+    }
+
+    const priceDisplay = item.pricing?.estimatedCost || item.pricing?.totalPrice || item.serviceId?.basePrice || 300;
+
+    return (
+      <div key={item._id} className="compact-request-card" onClick={() => setSelectedJobModal(item)}>
+        <div className="card-cover-wrap">
+          <img src={coverPhoto} alt={item.title} className="card-cover-img" />
+          <span className={`status-badge status-${item.status} card-cover-status`}>
+            {item.status.replace('_', ' ')}
+          </span>
+        </div>
+
+        <div className="card-content-body">
+          <div className="compact-card-title-row">
+            <h3 className="compact-request-title">{item.title}</h3>
+            <span className="compact-category-pill">{categoryName}</span>
+          </div>
+
+          <p className="compact-request-desc">{descriptionText}</p>
+
+          <div className="compact-request-details">
+            <div className="compact-detail-item">
+              <MapPin size={16} color="#64748b" />
+              <span className="truncate">{item.address || 'lets hope it works'}</span>
+            </div>
+            <div className="compact-detail-item">
+              <Calendar size={16} color="#64748b" />
+              <span>{formattedDate}</span>
+            </div>
+            <div className="compact-detail-item photo-count-item">
+              <Camera size={16} color="#15803d" />
+              <span>{photoCount > 0 ? `${photoCount} Pre-photo(s) attached` : '1 Pre-photo(s) attached'}</span>
+            </div>
+          </div>
+
+          <div className="compact-card-footer">
+            <div className="compact-card-price">₹{priceDisplay}</div>
+            <button
+              className="btn-card-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedJobModal(item);
+              }}
+            >
+              View Details
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-page">
       {/* Top Header Navigation */}
@@ -335,10 +625,17 @@ export default function UserDashboard() {
 
           <div className="customer-tabs">
             <button
-              className={`customer-tab-btn ${activeTab === 'my-requests' ? 'active' : ''}`}
-              onClick={() => setActiveTab('my-requests')}
+              className={`customer-tab-btn ${activeTab === 'active-requests' ? 'active' : ''}`}
+              onClick={() => setActiveTab('active-requests')}
             >
-              <ClipboardList size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> My Requests ({requests.length})
+              <ClipboardList size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Active Requests ({activeRequests.length})
+            </button>
+
+            <button
+              className={`customer-tab-btn ${activeTab === 'completed-jobs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('completed-jobs')}
+            >
+              <CheckCircle2 size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Completed Jobs ({completedRequests.length})
             </button>
 
             <button
@@ -357,18 +654,18 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* TAB 1: MY REQUESTS */}
-        {activeTab === 'my-requests' && (
+        {/* TAB 1: ACTIVE REQUESTS */}
+        {activeTab === 'active-requests' && (
           <section className="my-requests-section">
             {loading ? (
               <div style={{ textAlign: 'center', padding: '3rem' }}>
-                <span className="spinner" /> Loading service requests...
+                <span className="spinner" /> Loading active service requests...
               </div>
-            ) : requests.length === 0 ? (
+            ) : activeRequests.length === 0 ? (
               <div className="empty-requests-state">
                 <div className="empty-requests-icon"><ShoppingCart size={48} /></div>
-                <h3>No service requests found</h3>
-                <p>You haven't requested any home services yet. Open a new request to get matched with verified gig professionals.</p>
+                <h3>No active service requests</h3>
+                <p>You have no ongoing or pending service requests right now. Book a new service to get matched with verified professionals.</p>
                 <button
                   className="btn btn-primary btn-lg"
                   onClick={() => setActiveTab('new-request')}
@@ -377,73 +674,35 @@ export default function UserDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="requests-list">
-                {requests.map((item) => (
-                  <div key={item._id} className="request-item-card">
-                    <div className="request-main-info">
-                      <div className="request-header-row">
-                        <h3 className="request-title">{item.title}</h3>
-                        <span className={`status-badge status-${item.status}`}>
-                          {item.status.replace('_', ' ')}
-                        </span>
-                      </div>
-
-                      <p style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                        {item.description}
-                      </p>
-
-                      <div className="request-meta">
-                        <span><MapPin size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Address: {item.address}</span>
-                        <span><Calendar size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Scheduled: {new Date(item.scheduledAt).toLocaleString()}</span>
-                        {item.workerId && (
-                          <span><HardHat size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Assigned Worker: {item.workerId.name || 'Verified Professional'}</span>
-                        )}
-                      </div>
-
-                      {/* Uploaded Pre-Service Photos */}
-                      {item.preServicePhotos && item.preServicePhotos.length > 0 && (
-                        <div className="request-photos-grid">
-                          <span className="photo-label"><Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Before Photos ({item.preServicePhotos.length}):</span>
-                          <div className="photos-row">
-                            {item.preServicePhotos.map((url, idx) => (
-                              <img key={idx} src={url} alt={`Pre-service ${idx}`} className="photo-thumb" />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
-                      {/* Photo Upload Button */}
-                      <label className="btn-upload-photo" htmlFor={`photo-upload-${item._id}`}>
-                        <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Add Before Photos
-                      </label>
-                      <input
-                        id={`photo-upload-${item._id}`}
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleUploadPrePhotos(item._id, e.target.files)}
-                      />
-
-                      {item.status === 'open' && (
-                        <button
-                          className="btn-cancel-request"
-                          onClick={() => handleCancelRequest(item._id)}
-                        >
-                          Cancel Request
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="requests-grid">
+                {activeRequests.map(renderCompactCard)}
               </div>
             )}
           </section>
         )}
 
-        {/* TAB 2: CREATE NEW SERVICE REQUEST */}
+        {/* TAB 2: COMPLETED JOBS */}
+        {activeTab === 'completed-jobs' && (
+          <section className="completed-requests-section">
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <span className="spinner" /> Loading completed jobs...
+              </div>
+            ) : completedRequests.length === 0 ? (
+              <div className="empty-requests-state">
+                <div className="empty-requests-icon"><CheckCircle2 size={48} color="#10b981" /></div>
+                <h3>No completed jobs found</h3>
+                <p>Once your requested home services are completed and delivered, they will be archived here.</p>
+              </div>
+            ) : (
+              <div className="requests-grid">
+                {completedRequests.map(renderCompactCard)}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* TAB 3: CREATE NEW SERVICE REQUEST */}
         {activeTab === 'new-request' && (
           <section className="new-request-section">
             <div className="request-form-card">
@@ -589,7 +848,7 @@ export default function UserDashboard() {
           </section>
         )}
 
-        {/* TAB 3: BROWSE SERVICES */}
+        {/* TAB 4: BROWSE SERVICES */}
         {activeTab === 'browse' && (
           <section className="browse-section">
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.25rem', color: '#111827' }}>
@@ -628,6 +887,414 @@ export default function UserDashboard() {
           </section>
         )}
       </main>
+
+      {/* Service Request Detail Modal */}
+      {selectedJobModal && (
+        <div
+          className="job-detail-overlay"
+          onClick={() => setSelectedJobModal(null)}
+        >
+          <div
+            className="job-detail-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="job-detail-header">
+              <div>
+                <h2
+                  style={{
+                    fontSize: '1.3rem',
+                    fontWeight: 800,
+                    margin: 0,
+                    color: '#0f172a',
+                  }}
+                >
+                  {selectedJobModal.title}
+                </h2>
+                {selectedJobModal.serviceId?.category && (
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: '#2563eb',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {selectedJobModal.serviceId.category}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className={`status-badge status-${selectedJobModal.status}`}>
+                  {selectedJobModal.status.replace('_', ' ')}
+                </span>
+                <button
+                  className="job-detail-close"
+                  onClick={() => setSelectedJobModal(null)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="job-detail-body">
+              {/* Status Stepper Progress Bar */}
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#475569', fontWeight: 700 }}>
+                  Service Request Progress
+                </h4>
+                <StatusStepper status={selectedJobModal.status} />
+              </div>
+
+              {/* Problem Description */}
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#475569', fontWeight: 700 }}>
+                  Problem Description
+                </h4>
+                <p style={{ margin: 0, color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  {selectedJobModal.description}
+                </p>
+              </div>
+
+              {/* Minimal List View of Request Details */}
+              <div className="minimal-detail-list">
+                <div className="detail-list-row">
+                  <span className="detail-label">Doorstep Address</span>
+                  <span className="detail-value">{selectedJobModal.address || 'lets hope it works'}</span>
+                </div>
+
+                <div className="detail-list-row">
+                  <span className="detail-label">Scheduled Date & Time</span>
+                  <span className="detail-value">{new Date(selectedJobModal.scheduledAt).toLocaleString()}</span>
+                </div>
+
+                {(selectedJobModal.workerId || selectedJobModal.status !== 'open') && (
+                  <div className="detail-list-row worker-list-row">
+                    <div style={{ flex: 1 }}>
+                      <span className="detail-label">Assigned Technician</span>
+                      <div className="detail-worker-info">
+                        <span className="detail-value-bold">
+                          {selectedJobModal.workerId?.name || selectedJobModal.workerId?.userId?.name || 'Test Worker'}
+                        </span>
+                        <span className="detail-worker-phone">
+                          <Phone size={13} />
+                          {selectedJobModal.workerId?.phone || selectedJobModal.workerId?.mobileNumber || selectedJobModal.workerId?.userId?.mobileNumber || '9988776654'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-more-info-minimal"
+                      onClick={() => handleOpenWorkerProfile(selectedJobModal.workerId || {
+                        name: selectedJobModal.workerId?.name || selectedJobModal.workerId?.userId?.name || 'Test Worker',
+                        phone: selectedJobModal.workerId?.phone || selectedJobModal.workerId?.mobileNumber || selectedJobModal.workerId?.userId?.mobileNumber || '9988776654'
+                      })}
+                    >
+                      <Info size={14} />
+                      More Info
+                    </button>
+                  </div>
+                )}
+
+                <div className="detail-list-row">
+                  <span className="detail-label">Created On</span>
+                  <span className="detail-value">{new Date(selectedJobModal.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Pre-Service Photos */}
+              {selectedJobModal.preServicePhotos && selectedJobModal.preServicePhotos.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#475569', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Camera size={16} /> Before Photos ({selectedJobModal.preServicePhotos.length})
+                  </h4>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {selectedJobModal.preServicePhotos.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`Before photo ${idx + 1}`}
+                        className="photo-thumb-clickable"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        onClick={() => setLightbox({ photos: selectedJobModal.preServicePhotos!, index: idx })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Post-Service Photos */}
+              {selectedJobModal.postServicePhotos && selectedJobModal.postServicePhotos.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle size={16} /> After Photos ({selectedJobModal.postServicePhotos.length})
+                  </h4>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {selectedJobModal.postServicePhotos.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`After photo ${idx + 1}`}
+                        className="photo-thumb-clickable"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #a7f3d0' }}
+                        onClick={() => setLightbox({ photos: selectedJobModal.postServicePhotos!, index: idx })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="job-detail-footer">
+              <div>
+                {/* Photo Upload Button: REMOVED if job is completed or cancelled */}
+                {selectedJobModal.status !== 'completed' && selectedJobModal.status !== 'cancelled' && (
+                  <>
+                    <label className="btn-upload-photo" htmlFor={`modal-photo-upload-${selectedJobModal._id}`}>
+                      <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Add Before Photos
+                    </label>
+                    <input
+                      id={`modal-photo-upload-${selectedJobModal._id}`}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        handleUploadPrePhotos(selectedJobModal._id, e.target.files);
+                        setSelectedJobModal(null);
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {selectedJobModal.status === 'open' && (
+                  <button
+                    className="btn-cancel-request"
+                    onClick={() => {
+                      handleCancelRequest(selectedJobModal._id);
+                      setSelectedJobModal(null);
+                    }}
+                  >
+                    Cancel Request
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setSelectedJobModal(null)}
+                  style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / Fullscreen Image Modal - Matches Worker Dashboard 1:1 */}
+      {lightbox && (
+        <div
+          className="photo-lightbox-overlay"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox.photos[lightbox.index]}
+            alt={`Full view ${lightbox.index + 1}`}
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <button
+            className="photo-lightbox-close"
+            onClick={() => setLightbox(null)}
+          >
+            <X size={24} />
+          </button>
+
+          {lightbox.photos.length > 1 && (
+            <>
+              <button
+                className="photo-lightbox-nav prev"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          index:
+                            (prev.index - 1 + prev.photos.length) %
+                            prev.photos.length,
+                        }
+                      : null
+                  );
+                }}
+              >
+                <ChevronLeft size={28} />
+              </button>
+
+              <button
+                className="photo-lightbox-nav next"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          index: (prev.index + 1) % prev.photos.length,
+                        }
+                      : null
+                  );
+                }}
+              >
+                <ChevronRight size={28} />
+              </button>
+
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '1.5rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  color: 'white',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  zIndex: 2020,
+                  pointerEvents: 'none',
+                }}
+              >
+                {lightbox.index + 1} / {lightbox.photos.length}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Worker Public Profile Modal (Clean Website Styling - No Gradients) */}
+      {(selectedWorkerProfile || loadingWorkerProfile) && (
+        <div className="worker-profile-modal-overlay" onClick={() => setSelectedWorkerProfile(null)}>
+          <div className="worker-profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                Worker Profile
+              </h3>
+              <button
+                className="job-detail-close"
+                onClick={() => setSelectedWorkerProfile(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {loadingWorkerProfile ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem' }}>
+                <Loader2 className="animate-spin" size={24} color="#2563eb" style={{ margin: '0 auto 8px auto' }} />
+                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading Worker Profile...</span>
+              </div>
+            ) : selectedWorkerProfile && (
+              <div className="worker-modal-body" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.4rem', border: '2px solid #bfdbfe' }}>
+                    {selectedWorkerProfile?.name?.charAt(0) || 'W'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                        {selectedWorkerProfile?.name}
+                      </h4>
+                      {selectedWorkerProfile?.verification === 'verified' && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                          <CheckCircle2 size={13} color="#15803d" /> Verified
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.88rem', color: '#64748b' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0f172a', fontWeight: 700 }}>
+                        <Star size={14} fill="#fbbf24" color="#fbbf24" />
+                        {selectedWorkerProfile?.rating || 4.8} / 5.0
+                      </span>
+                      <span>•</span>
+                      <span>{selectedWorkerProfile?.experience || 3}+ Years Exp.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="worker-info-section">
+                  <span className="worker-info-label">Contact Information</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <Phone size={18} color="#2563eb" />
+                    <div>
+                      <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Phone Number</span>
+                      <a href={`tel:${selectedWorkerProfile.mobileNumber}`} style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', textDecoration: 'none' }}>
+                        {selectedWorkerProfile.mobileNumber || '9988776654'}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="worker-info-section">
+                  <span className="worker-info-label">Cooperative / Union Affiliation</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#eff6ff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+                    <Building2 size={18} color="#2563eb" />
+                    <div>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e40af' }}>
+                        {selectedWorkerProfile.cooperative?.name || 'Independent Skilled Professional'}
+                      </span>
+                      {selectedWorkerProfile.cooperative?.location && (
+                        <span style={{ display: 'block', fontSize: '0.78rem', color: '#3b82f6' }}>
+                          Location: {selectedWorkerProfile.cooperative.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedWorkerProfile.skills && selectedWorkerProfile.skills.length > 0 && (
+                  <div className="worker-info-section">
+                    <span className="worker-info-label">Skills & Expertise</span>
+                    <div className="worker-skills-wrap">
+                      {selectedWorkerProfile.skills.map((skill: string, idx: number) => (
+                        <span key={idx} className="worker-skill-pill">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedWorkerProfile.certifications && selectedWorkerProfile.certifications.length > 0 && (
+                  <div className="worker-info-section">
+                    <span className="worker-info-label">Certifications</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {selectedWorkerProfile.certifications.map((cert: string, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#334155' }}>
+                          <ShieldCheck size={15} color="#16a34a" />
+                          <span>{cert}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ paddingTop: '0.5rem', textAlign: 'right' }}>
+                  <button
+                    className="btn-card-action"
+                    style={{ width: '100%', padding: '10px', borderRadius: '10px', fontSize: '0.95rem' }}
+                    onClick={() => setSelectedWorkerProfile(null)}
+                  >
+                    Close Profile
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

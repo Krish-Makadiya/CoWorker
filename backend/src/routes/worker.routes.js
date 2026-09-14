@@ -8,6 +8,7 @@ import {
   verifyWorker,
   registerWorkerByCooperative,
   getWorkerById,
+  getWorkerPublicProfile,
 } from "../controllers/worker.controller.js";
 import {
   authenticateUser,
@@ -59,6 +60,8 @@ router
     requireRole("worker", "cooperative"),
     getWorkerPreviousServices
   );
+router.route("/:id/public").get(getWorkerPublicProfile);
+router.route("/public/:id").get(getWorkerPublicProfile);
 router
   .route("/:id")
   .get(authenticateUser, requireRole("worker", "cooperative"), getWorkerById)
