@@ -158,6 +158,10 @@ export default function WorkerDashboard() {
   const [userData, setUserData] = useState<any>(null);
   const [workerProfile, setWorkerProfile] = useState<any>(null);
 
+  const [cooperatives, setCooperatives] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedCoopId, setSelectedCoopId] = useState<string>("");
+  const [isJoiningCoop, setIsJoiningCoop] = useState<boolean>(false);
+
   const [selectedJobModal, setSelectedJobModal] =
     useState<ServiceRequest | null>(null);
   const [lightbox, setLightbox] = useState<{
@@ -228,6 +232,7 @@ export default function WorkerDashboard() {
     }
 
     fetchAvailableJobs();
+    fetchCooperatives();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -241,6 +246,56 @@ export default function WorkerDashboard() {
     const headers: Record<string, string> = {};
     if (userId) headers["user-id"] = userId;
     return headers;
+  };
+
+  const fetchCooperatives = async () => {
+    try {
+      const response = await fetch(ROUTES.cooperative.names);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.cooperatives)) {
+        setCooperatives(data.cooperatives);
+      }
+    } catch (error) {
+      console.error("Fetch cooperatives error:", error);
+    }
+  };
+
+  const handleJoinCooperative = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCoopId) {
+      toast.error("Please select a cooperative to join");
+      return;
+    }
+    const workerId = workerProfile?._id || localStorage.getItem("userId");
+    if (!workerId) {
+      toast.error("Worker session invalid");
+      return;
+    }
+    setIsJoiningCoop(true);
+    try {
+      const response = await fetch(ROUTES.worker.profile(workerId), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          cooperativeId: selectedCoopId,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success("Successfully joined the cooperative!");
+        fetchWorkerProfile(workerId);
+      } else {
+        toast.error(data.message || "Failed to join cooperative");
+      }
+    } catch (error) {
+      console.error("Error joining cooperative:", error);
+      toast.error("Network error while joining cooperative");
+    } finally {
+      setIsJoiningCoop(false);
+    }
   };
 
   const fetchWorkerProfile = async (id: string) => {
@@ -1315,7 +1370,7 @@ export default function WorkerDashboard() {
                         </div>
                       </div>
 
-                      {workerProfile?.cooperativeId?.name && (
+                      {workerProfile?.cooperativeId?.name ? (
                         <div className="worker-profile-field">
                           <Shield size={18} />
                           <div className="worker-profile-field-content">
@@ -1324,6 +1379,21 @@ export default function WorkerDashboard() {
                             </span>
                             <span className="worker-profile-value">
                               {workerProfile.cooperativeId.name}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="worker-profile-field">
+                          <Shield size={18} />
+                          <div className="worker-profile-field-content">
+                            <span className="worker-profile-label">
+                              Cooperative
+                            </span>
+                            <span
+                              className="worker-profile-value"
+                              style={{ color: "#d97706", fontWeight: 600 }}
+                            >
+                              Independent Worker (No Cooperative)
                             </span>
                           </div>
                         </div>
@@ -1391,6 +1461,151 @@ export default function WorkerDashboard() {
                 );
               })()}
             </div>
+
+            {(!workerProfile?.cooperativeId ||
+              !workerProfile?.cooperativeId?.name) && (
+              <div
+                className="join-cooperative-card"
+                style={{
+                  marginTop: "24px",
+                  padding: "24px",
+                  background: "#ffffff",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "16px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(37, 99, 235, 0.1)",
+                      color: "#2563eb",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Shield size={26} />
+                  </div>
+                  <div>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "1.15rem",
+                        fontWeight: 700,
+                        color: "#0f172a",
+                      }}
+                    >
+                      Join a Cooperative / Union
+                    </h3>
+                    <p
+                      style={{
+                        margin: "6px 0 0 0",
+                        fontSize: "0.9rem",
+                        color: "#64748b",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      You are currently registered as an independent worker.
+                      Select a registered cooperative below to join and gain
+                      access to group benefits, verified service badges, and
+                      federation representation.
+                    </p>
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={handleJoinCooperative}
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "12px",
+                    alignItems: "flex-end",
+                    marginTop: "16px",
+                    paddingTop: "16px",
+                    borderTop: "1px dashed #e2e8f0",
+                  }}
+                >
+                  <div style={{ flex: "1", minWidth: "250px" }}>
+                    <label
+                      htmlFor="cooperative-select"
+                      style={{
+                        display: "block",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        color: "#475569",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Select Cooperative / Union
+                    </label>
+                    <select
+                      id="cooperative-select"
+                      value={selectedCoopId}
+                      onChange={(e) => setSelectedCoopId(e.target.value)}
+                      required
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "0.95rem",
+                        background: "#ffffff",
+                        color: "#1e293b",
+                        outline: "none",
+                      }}
+                    >
+                      <option value="">-- Choose a Cooperative / Union --</option>
+                      {cooperatives.map((coop) => (
+                        <option key={coop._id} value={coop._id}>
+                          {coop.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isJoiningCoop || !selectedCoopId}
+                    style={{
+                      padding: "10px 22px",
+                      borderRadius: "8px",
+                      background:
+                        isJoiningCoop || !selectedCoopId
+                          ? "#cbd5e1"
+                          : "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                      color: "#ffffff",
+                      fontWeight: 600,
+                      border: "none",
+                      cursor:
+                        isJoiningCoop || !selectedCoopId
+                          ? "not-allowed"
+                          : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    {isJoiningCoop ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Joining...
+                      </>
+                    ) : (
+                      "Join Cooperative"
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
           </section>
         )}
       </div>

@@ -447,9 +447,23 @@ Register a worker directly under the authenticated cooperative (automatically ve
 
 #### `PUT /worker/:id`
 
-Update a worker belonging to the authenticated cooperative.
+Update worker details or select/join a cooperative.
 
-🔒 **Protected** — requires `user-id` header + `cooperative` role.
+🔒 **Protected** — requires `user-id` header + `worker` or `cooperative` role.
+
+> **Access Control**: A Worker can ONLY update their own profile / join a cooperative (`cooperativeId`). A Cooperative can ONLY update workers registered under their cooperative.
+
+**Request Body (Optional fields)**
+
+```json
+{
+  "skills": ["string"],
+  "experience": 0,
+  "certifications": ["string"],
+  "address": "string",
+  "cooperativeId": "ObjectId | null"
+}
+```
 
 ---
 

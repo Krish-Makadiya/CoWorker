@@ -99,11 +99,15 @@ beforeAll(() => {
       cooperativeId: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a99"),
       skills: ["plumbing"],
       verification: "verified",
+      save: jest.fn(async () => {}),
+      populate: jest.fn(async () => targetWorkerObj),
     };
     const otherWorkerObj = {
       _id: new mongoose.Types.ObjectId("60f71b2f9f1b2c001f8e4a88"),
       userId: new mongoose.Types.ObjectId(MOCK_IDS.otherWorker),
       verification: "verified",
+      save: jest.fn(async () => {}),
+      populate: jest.fn(async () => otherWorkerObj),
     };
 
     if (query && query.$or) {
@@ -130,6 +134,11 @@ beforeAll(() => {
     };
     return chain;
   });
+
+  Cooperative.findById = jest.fn(async (id) => ({
+    _id: id,
+    name: "Mock Cooperative",
+  }));
 
   Cooperative.findOne = jest.fn(async (query) => {
     if (query.userId?.toString() === MOCK_IDS.cooperative) {
@@ -162,11 +171,11 @@ const routesToTest = [
   { method: "put", path: "/cooperative/profile", allowedRoles: ["cooperative"] },
   { method: "get", path: "/worker/", allowedRoles: ["cooperative"] },
   { method: "post", path: "/worker/register-by-cooperative", allowedRoles: ["cooperative"] },
-  { method: "put", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["cooperative"] },
   { method: "delete", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["cooperative"] },
   { method: "patch", path: "/worker/60f71b2f9f1b2c001f8e4a3b/verify", allowedRoles: ["cooperative"] },
 
   // Worker or Cooperative Role Required
+  { method: "put", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["worker", "cooperative"] },
   { method: "get", path: "/worker/60f71b2f9f1b2c001f8e4a3b", allowedRoles: ["worker", "cooperative"] },
   { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/ongoing", allowedRoles: ["worker", "cooperative"] },
   { method: "get", path: "/api/service-requests/worker/60f71b2f9f1b2c001f8e4a3b/previous", allowedRoles: ["worker", "cooperative"] },
@@ -350,5 +359,32 @@ describe("GET worker ongoing & previous services logic", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+  });
+});
+
+describe("PUT /worker/:id Worker Update & Join Cooperative Logic", () => {
+  test("allows worker to update their own profile / join cooperative", async () => {
+    const res = await request(app)
+      .put(`/worker/${MOCK_IDS.targetWorker}`)
+      .set("user-id", MOCK_IDS.worker)
+      .send({
+        cooperativeId: "60f71b2f9f1b2c001f8e4a99",
+        skills: ["plumbing", "electrical"],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test("rejects worker attempting to update another worker's profile with 403", async () => {
+    const res = await request(app)
+      .put(`/worker/${MOCK_IDS.targetWorker}`)
+      .set("user-id", MOCK_IDS.otherWorker)
+      .send({
+        skills: ["painting"],
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
   });
 });

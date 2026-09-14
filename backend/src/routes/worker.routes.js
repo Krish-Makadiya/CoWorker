@@ -62,7 +62,7 @@ router
 router
   .route("/:id")
   .get(authenticateUser, requireRole("worker", "cooperative"), getWorkerById)
-  .put(authenticateUser, requireRole("cooperative"), updateWorker)
+  .put(authenticateUser, requireRole("worker", "cooperative"), updateWorker)
   .delete(authenticateUser, requireRole("cooperative"), deleteWorker);
 router
   .route("/:id/verify")
