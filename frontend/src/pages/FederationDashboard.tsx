@@ -59,6 +59,74 @@ export default function FederationDashboard() {
     verification: "verified"
   });
 
+  // Edit Worker Directory State
+  const [editingWorker, setEditingWorker] = useState<any | null>(null);
+  const [submittingEditWorker, setSubmittingEditWorker] = useState<boolean>(false);
+  const [editWorkerFormData, setEditWorkerFormData] = useState({
+    skills: "",
+    experience: 0,
+    certifications: "",
+    address: ""
+  });
+
+  const handleStartEditWorker = (worker: any) => {
+    setEditingWorker(worker);
+    setEditWorkerFormData({
+      skills: worker.skills?.join(", ") || "",
+      experience: worker.experience || 0,
+      certifications: worker.certifications?.join(", ") || "",
+      address: worker.address || ""
+    });
+  };
+
+  const handleSaveEditWorker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorker) return;
+    setSubmittingEditWorker(true);
+
+    try {
+      const skillsArray = editWorkerFormData.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const certsArray = editWorkerFormData.certifications
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      const payload = {
+        skills: skillsArray,
+        experience: Number(editWorkerFormData.experience) || 0,
+        certifications: certsArray,
+        address: editWorkerFormData.address.trim()
+      };
+
+      const workerId = editingWorker._id;
+      const response = await fetch(`http://localhost:8000/worker/${workerId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": typeof userId === "object" ? userId._id : userId
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Failed to update worker details");
+      }
+
+      toast.success(`Worker '${editingWorker.userId?.name || ""}' details updated!`);
+      setEditingWorker(null);
+      fetchWorkers();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update worker details.");
+    } finally {
+      setSubmittingEditWorker(false);
+    }
+  };
+
   const fetchCooperatives = async () => {
     setLoading(true);
     try {
@@ -739,6 +807,27 @@ export default function FederationDashboard() {
                         <div><strong>Certifications:</strong> {worker.certifications?.join(", ") || "None"}</div>
                         <div><strong>Address:</strong> {worker.address || "N/A"}</div>
                       </div>
+
+                      <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f3f4", display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          onClick={() => handleStartEditWorker(worker)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "6px 12px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            borderRadius: "6px",
+                            border: "1px solid #dadce0",
+                            background: "#f8faf7",
+                            color: "#385e38",
+                            cursor: "pointer"
+                          }}
+                        >
+                          <Edit3 size={13} /> Edit Worker Details
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -844,6 +933,148 @@ export default function FederationDashboard() {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* Edit Worker Details Modal */}
+      {editingWorker && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "12px",
+              maxWidth: "520px",
+              width: "100%",
+              padding: "24px",
+              boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "16px",
+                borderBottom: "1px solid #e8ebe7",
+                paddingBottom: "12px",
+              }}
+            >
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a2e1a" }}>
+                Edit Worker Details ({editingWorker.userId?.name || "Worker"})
+              </h3>
+              <button
+                onClick={() => setEditingWorker(null)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  color: "#5f6368",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditWorker} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>
+                  Worker Name
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingWorker.userId?.name || ""}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0", background: "#f8faf7" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>
+                  Skills (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editWorkerFormData.skills}
+                  onChange={(e) => setEditWorkerFormData({ ...editWorkerFormData, skills: e.target.value })}
+                  placeholder="e.g. Plumbing, Electrical, Carpentry"
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>
+                    Experience (Years)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editWorkerFormData.experience}
+                    onChange={(e) => setEditWorkerFormData({ ...editWorkerFormData, experience: Number(e.target.value) || 0 })}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>
+                    Certifications (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={editWorkerFormData.certifications}
+                    onChange={(e) => setEditWorkerFormData({ ...editWorkerFormData, certifications: e.target.value })}
+                    placeholder="e.g. ITI, NSDC"
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#5f6368", display: "block", marginBottom: "4px" }}>
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={editWorkerFormData.address}
+                  onChange={(e) => setEditWorkerFormData({ ...editWorkerFormData, address: e.target.value })}
+                  placeholder="Worker address"
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #dadce0" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px", borderTop: "1px solid #e8ebe7", paddingTop: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingWorker(null)}
+                  style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #dadce0", background: "#fff", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEditWorker}
+                  style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#385e38", color: "#fff", cursor: "pointer", fontWeight: 600 }}
+                >
+                  {submittingEditWorker ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
