@@ -118,6 +118,15 @@ const listCooperatives = async (req, res) => {
   });
 };
 
+const getCooperativeNames = async (req, res) => {
+  const cooperatives = await Cooperative.find().select("_id name");
+
+  res.status(200).json({
+    success: true,
+    cooperatives,
+  });
+};
+
 const getCooperativeProfile = async (req, res) => {
   const cooperative = await Cooperative.findOne({
     userId: req.user._id,
@@ -209,6 +218,7 @@ export {
   registerCooperative,
   loginCooperative,
   listCooperatives,
+  getCooperativeNames,
   getCooperativeProfile,
   updateCooperativeProfile,
 };

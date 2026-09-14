@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getCooperativeProfile,
   listCooperatives,
+  getCooperativeNames,
   loginCooperative,
   registerCooperative,
   updateCooperativeProfile,
@@ -14,6 +15,8 @@ import {
 const router = Router();
 
 router.route("/").get(listCooperatives);
+router.route("/names").get(getCooperativeNames);
+router.route("/list-names").get(getCooperativeNames);
 router.route("/register").post(registerCooperative);
 router.route("/login").post(loginCooperative);
 

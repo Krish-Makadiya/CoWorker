@@ -275,6 +275,28 @@ List all cooperatives.
 
 ---
 
+#### `GET /cooperative/names`
+
+Get all cooperatives ID (`_id`) and name (`name`) without authentication.
+
+🔓 **Public** — no authentication required.
+
+**Response `200`**
+
+```json
+{
+  "success": true,
+  "cooperatives": [
+    {
+      "_id": "ObjectId",
+      "name": "string"
+    }
+  ]
+}
+```
+
+---
+
 ### Worker
 
 #### `POST /worker/register`
@@ -789,6 +811,7 @@ All errors follow this format:
 | -------- | --------------------------------------- | -------------------- | ------------------------------------------------- |
 | `GET`    | `/health`                               | Public               | Health check                                      |
 | `GET`    | `/cooperative/`                         | Public               | List all cooperatives                             |
+| `GET`    | `/cooperative/names`                    | Public               | Get all cooperative IDs and names                 |
 | `POST`   | `/cooperative/register`                 | Public               | Register a cooperative                            |
 | `POST`   | `/cooperative/login`                    | Public               | Login as cooperative                              |
 | `GET`    | `/worker/`                              | Cooperative          | List cooperative's workers 🔒                     |

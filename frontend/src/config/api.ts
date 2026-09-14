@@ -5,6 +5,7 @@ export const ROUTES = {
   cooperative: {
     register: `${API_BASE_URL}/cooperative/register`,
     login: `${API_BASE_URL}/cooperative/login`,
+    names: `${API_BASE_URL}/cooperative/names`,
   },
   worker: {
     register: `${API_BASE_URL}/worker/register`,
