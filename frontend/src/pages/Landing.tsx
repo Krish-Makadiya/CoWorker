@@ -33,154 +33,122 @@ interface BackendService {
   image?: string;
 }
 
+const SERVICE_IMAGES: Record<string, string> = {
+  'Masonry Work': 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=600&q=80',
+  'AC Repair': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+  'Welding Work': 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=600&q=80',
+  'Garden Maintenance': 'https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=600&q=80',
+  'Floor Tiling': 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?auto=format&fit=crop&w=600&q=80',
+  'Bathroom Fitting': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80',
+  'Plumbing Repair': 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=600&q=80',
+  'Electrical Wiring': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+  'Furniture Repair': 'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&w=600&q=80',
+  'Wall Painting': 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
+};
+
 const BACKEND_SEED_SERVICES: BackendService[] = [
   {
     _id: "6aa6b59a6bbb7420349a29e5",
     name: "Masonry Work",
     category: "Masonry",
-    description:
-      "Brickwork, cement work, wall repairs, and other general masonry services.",
+    description: "Brickwork, cement work, wall repairs, and other general masonry services.",
     basePrice: 600,
-    image:
-      "https://plus.unsplash.com/premium_photo-1682724028871-80fe21ac920b?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    image: SERVICE_IMAGES['Masonry Work'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29e6",
     name: "AC Repair",
     category: "Appliance Repair",
-    description:
-      "Inspection, servicing, and repair of residential air conditioning systems.",
+    description: "Inspection, servicing, and repair of residential air conditioning systems.",
     basePrice: 500,
-    image:
-      "https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['AC Repair'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29e7",
     name: "Welding Work",
     category: "Welding",
-    description:
-      "Metal welding and fabrication services for gates, grills, frames, and other structures.",
+    description: "Metal welding and fabrication services for gates, grills, frames, and other structures.",
     basePrice: 700,
-    image:
-      "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Welding Work'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29e8",
     name: "Garden Maintenance",
     category: "Gardening",
-    description:
-      "Routine garden maintenance including trimming, cleaning, pruning, and plant care.",
+    description: "Routine garden maintenance including trimming, cleaning, pruning, and plant care.",
     basePrice: 400,
-    image:
-      "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Garden Maintenance'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29e9",
     name: "Floor Tiling",
     category: "Tiling",
-    description:
-      "Installation and replacement of floor and wall tiles with proper leveling and finishing.",
+    description: "Installation and replacement of floor and wall tiles with proper leveling and finishing.",
     basePrice: 1000,
-    image:
-      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Floor Tiling'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29ea",
     name: "Bathroom Fitting",
     category: "Plumbing",
-    description:
-      "Installation and replacement of bathroom fixtures including taps, showers, and fittings.",
+    description: "Installation and replacement of bathroom fixtures including taps, showers, and fittings.",
     basePrice: 600,
-    image:
-      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Bathroom Fitting'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29eb",
     name: "Plumbing Repair",
     category: "Plumbing",
-    description:
-      "Professional repair of leaking pipes, taps, faucets, and other plumbing issues.",
+    description: "Professional repair of leaking pipes, taps, faucets, and other plumbing issues.",
     basePrice: 300,
-    image:
-      "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Plumbing Repair'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29ec",
     name: "Electrical Wiring",
     category: "Electrical",
-    description:
-      "Electrical wiring, switch installation, socket replacement, and basic electrical repairs.",
+    description: "Electrical wiring, switch installation, socket replacement, and basic electrical repairs.",
     basePrice: 500,
-    image:
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Electrical Wiring'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29ed",
     name: "Furniture Repair",
     category: "Carpentry",
-    description:
-      "Repair and maintenance of wooden furniture including chairs, tables, doors, and cabinets.",
+    description: "Repair and maintenance of wooden furniture including chairs, tables, doors, and cabinets.",
     basePrice: 400,
-    image:
-      "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Furniture Repair'],
   },
   {
     _id: "6aa6b59a6bbb7420349a29ee",
     name: "Wall Painting",
     category: "Painting",
-    description:
-      "Professional interior and exterior wall painting with surface preparation and finishing.",
+    description: "Professional interior and exterior wall painting with surface preparation and finishing.",
     basePrice: 800,
-    image:
-      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=500&q=80",
+    image: SERVICE_IMAGES['Wall Painting'],
   },
 ];
 
-const SERVICE_IMAGES: Record<string, string> = {
-  "Masonry Work":
-    "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=500&q=80",
-  "AC Repair":
-    "https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80",
-  "Welding Work":
-    "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=500&q=80",
-  "Garden Maintenance":
-    "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=500&q=80",
-  "Floor Tiling":
-    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80",
-  "Bathroom Fitting":
-    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80",
-  "Plumbing Repair":
-    "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=500&q=80",
-  "Electrical Wiring":
-    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80",
-  "Furniture Repair":
-    "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=500&q=80",
-  "Wall Painting":
-    "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=500&q=80",
-};
-
 const getImageForService = (service: any) => {
-  if (service?.image) return service.image;
-  if (service?.name && SERVICE_IMAGES[service.name])
+  if (service?.name && SERVICE_IMAGES[service.name]) {
     return SERVICE_IMAGES[service.name];
-  const cat = (service?.category || "").toLowerCase();
-  if (cat.includes("plumb"))
-    return "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("electr"))
-    return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("paint"))
-    return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("mason"))
-    return "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("weld"))
-    return "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("garden"))
-    return "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("til"))
-    return "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=500&q=80";
-  if (cat.includes("appliance"))
-    return "https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&w=500&q=80";
-  return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=500&q=80";
+  }
+
+  const name = (service?.name || '').toLowerCase();
+  const cat = (service?.category || '').toLowerCase();
+
+  if (name.includes('mason') || cat.includes('mason')) return SERVICE_IMAGES['Masonry Work'];
+  if (name.includes('ac') || cat.includes('appliance')) return SERVICE_IMAGES['AC Repair'];
+  if (name.includes('weld') || cat.includes('weld')) return SERVICE_IMAGES['Welding Work'];
+  if (name.includes('garden') || cat.includes('garden')) return SERVICE_IMAGES['Garden Maintenance'];
+  if (name.includes('tile') || cat.includes('til')) return SERVICE_IMAGES['Floor Tiling'];
+  if (name.includes('bath') || cat.includes('bath')) return SERVICE_IMAGES['Bathroom Fitting'];
+  if (name.includes('plumb') || cat.includes('plumb')) return SERVICE_IMAGES['Plumbing Repair'];
+  if (name.includes('electr') || cat.includes('electr')) return SERVICE_IMAGES['Electrical Wiring'];
+  if (name.includes('furnit') || cat.includes('carpen')) return SERVICE_IMAGES['Furniture Repair'];
+  if (name.includes('paint') || cat.includes('paint')) return SERVICE_IMAGES['Wall Painting'];
+
+  return service?.image || SERVICE_IMAGES['Masonry Work'];
 };
 
 const popularCities = [
