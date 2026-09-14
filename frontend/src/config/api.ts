@@ -9,6 +9,7 @@ export const ROUTES = {
   worker: {
     register: `${API_BASE_URL}/worker/register`,
     login: `${API_BASE_URL}/worker/login`,
+    profile: (id: string) => `${API_BASE_URL}/worker/${id}`,
   },
   customer: {
     register: `${API_BASE_URL}/customer/register`,

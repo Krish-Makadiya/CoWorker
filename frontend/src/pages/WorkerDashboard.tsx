@@ -1,32 +1,932 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wrench, Construction } from 'lucide-react';
+import {
+  Wrench, Briefcase, Search, User, MapPin, Calendar, Camera,
+  Loader2, Play, CheckCircle, RefreshCw, Clock,
+  Mail, Phone, Shield, Star, X, ChevronLeft, ChevronRight,
+  Maximize2, Images
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import Navbar from '../components/Navbar';
+import { ROUTES } from '../config/api';
 import './Dashboard.css';
+
+interface ServiceRequest {
+  _id: string;
+  title: string;
+  description: string;
+  address: string;
+  status: 'open' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+  scheduledAt: string;
+  createdAt: string;
+  preServicePhotos?: string[];
+  postServicePhotos?: string[];
+  serviceId?: {
+    _id?: string;
+    name?: string;
+    category?: string;
+    basePrice?: number;
+  };
+  customerId?: {
+    _id?: string;
+    userId?: {
+      name?: string;
+      email?: string;
+      mobileNumber?: string;
+    };
+  };
+  workerId?: string | {
+    _id?: string;
+    userId?: {
+      name?: string;
+    };
+  };
+}
+
+function JobCardCarousel({ photos, onClick }: { photos?: string[]; onClick: () => void }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (!photos || photos.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % photos.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [photos]);
+
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="card-photo-carousel" onClick={onClick} style={{ cursor: 'pointer' }}>
+        <div className="carousel-no-photos">
+          <Camera size={32} opacity={0.4} />
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>No Pre-photos Attached</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-photo-carousel" onClick={onClick} style={{ cursor: 'pointer' }}>
+      {photos.map((photo, index) => (
+        <img
+          key={index}
+          src={photo}
+          alt={`Pre-photo ${index + 1}`}
+          className={index === currentIndex ? 'active' : ''}
+        />
+      ))}
+
+      {photos.length > 1 && (
+        <>
+          <div className="card-photo-count">
+            <Camera size={12} />
+            <span>{currentIndex + 1}/{photos.length}</span>
+          </div>
+          <div className="carousel-dots" onClick={(e) => e.stopPropagation()}>
+            {photos.map((_, index) => (
+              <button
+                key={index}
+                className={`carousel-dot ${index === currentIndex ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(index);
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function WorkerDashboard() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'my-jobs' | 'available-jobs' | 'profile'>('my-jobs');
+
+  const [myJobs, setMyJobs] = useState<ServiceRequest[]>([]);
+  const [availableJobs, setAvailableJobs] = useState<ServiceRequest[]>([]);
+
+  const [isLoadingAvailable, setIsLoadingAvailable] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const [userData, setUserData] = useState<any>(null);
+
+  const [selectedJobModal, setSelectedJobModal] = useState<ServiceRequest | null>(null);
+  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightbox) return;
+      if (e.key === 'Escape') {
+        setLightbox(null);
+      } else if (e.key === 'ArrowLeft' && lightbox.photos.length > 1) {
+        setLightbox((prev) =>
+          prev
+            ? {
+                ...prev,
+                index: (prev.index - 1 + prev.photos.length) % prev.photos.length
+              }
+            : null
+        );
+      } else if (e.key === 'ArrowRight' && lightbox.photos.length > 1) {
+        setLightbox((prev) =>
+          prev
+            ? {
+                ...prev,
+                index: (prev.index + 1) % prev.photos.length
+              }
+            : null
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightbox]);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userStr = localStorage.getItem('user');
+
+    if (!userId || !userStr) {
+      toast.error('Please login first');
+      navigate('/login/worker');
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(userStr);
+      if (!parsedUser.roles?.includes('worker')) {
+        toast.error('Unauthorized access. Worker role required.');
+        navigate('/login/worker');
+        return;
+      }
+      setUserData(parsedUser);
+    } catch (e) {
+      navigate('/login/worker');
+      return;
+    }
+
+    fetchAvailableJobs();
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.clear();
+    toast.success('Logged out successfully.');
     navigate('/', { replace: true });
+  };
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const userId = localStorage.getItem('userId') || '';
+    const headers: Record<string, string> = {};
+    if (userId) headers['user-id'] = userId;
+    return headers;
+  };
+
+  const fetchAvailableJobs = async () => {
+    setIsLoadingAvailable(true);
+    try {
+      const response = await fetch(`${ROUTES.serviceRequests}/available`, {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setAvailableJobs(data.serviceRequests || []);
+      } else {
+        toast.error(data.message || 'Failed to fetch available jobs');
+      }
+    } catch (error) {
+      console.error('Fetch available jobs error:', error);
+      toast.error('Network error while fetching jobs');
+    } finally {
+      setIsLoadingAvailable(false);
+    }
+  };
+
+  const handleAcceptJob = async (job: ServiceRequest) => {
+    setActionLoadingId(job._id);
+    try {
+      const response = await fetch(`${ROUTES.serviceRequests}/${job._id}/accept`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Job accepted successfully!');
+        const updatedJob = data.serviceRequest || { ...job, status: 'accepted' };
+
+        setAvailableJobs((prev) => prev.filter((j) => j._id !== job._id));
+        setMyJobs((prev) => [updatedJob, ...prev]);
+        if (selectedJobModal?._id === job._id) {
+          setSelectedJobModal(null);
+        }
+        setActiveTab('my-jobs');
+      } else {
+        toast.error(data.message || 'Failed to accept job');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleStartJob = async (jobId: string) => {
+    setActionLoadingId(jobId);
+    try {
+      const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/start`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Job started!');
+        setMyJobs((prev) =>
+          prev.map((job) =>
+            job._id === jobId ? data.serviceRequest || { ...job, status: 'in_progress' } : job
+          )
+        );
+      } else {
+        toast.error(data.message || 'Failed to start job');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleCompleteJob = async (jobId: string) => {
+    setActionLoadingId(jobId);
+    try {
+      const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/complete`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Job marked as completed!');
+        setMyJobs((prev) =>
+          prev.map((job) =>
+            job._id === jobId ? data.serviceRequest || { ...job, status: 'completed' } : job
+          )
+        );
+      } else {
+        toast.error(data.message || 'Failed to complete job');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handlePhotoUpload = async (jobId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setActionLoadingId(jobId + '_upload');
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append('photos', file);
+    });
+
+    try {
+      const response = await fetch(`${ROUTES.serviceRequests}/${jobId}/post-photos`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success(`${files.length} photo(s) uploaded successfully!`);
+        setMyJobs((prev) =>
+          prev.map((job) => (job._id === jobId ? data.serviceRequest : job))
+        );
+      } else {
+        toast.error(data.message || 'Failed to upload photos');
+      }
+    } catch (error) {
+      toast.error('Network error while uploading photos');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not scheduled';
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   };
 
   return (
     <div className="dashboard-page">
-      <Navbar
-        portalName="Worker Portal"
-        portalIcon={Wrench}
-        onLogout={handleLogout}
-      />
+      <Navbar portalName="Worker Portal" portalIcon={Wrench} onLogout={handleLogout} />
+      <div className="dashboard-container">
+        <header className="customer-dashboard-header">
+          <div className="customer-welcome">
+            <h1>Worker Portal</h1>
+            <p>Find jobs, manage your tasks, and view your profile.</p>
+          </div>
 
-      <main className="dashboard-content">
-        <div className="dashboard-placeholder">
-          <div className="dashboard-placeholder-icon"><Wrench size={48} /></div>
-          <h1>Worker Dashboard</h1>
-          <p>Welcome! Your dashboard is coming soon.</p>
-          <span className="dashboard-placeholder-badge"><Construction size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Under Construction</span>
+          <div className="customer-tabs">
+            <button
+              className={`customer-tab-btn ${activeTab === 'my-jobs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('my-jobs')}
+            >
+              <Briefcase size={18} />
+              My Jobs
+              {myJobs.length > 0 && (
+                <span
+                  className="tab-badge"
+                  style={{
+                    marginLeft: '8px',
+                    background: 'var(--primary)',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px'
+                  }}
+                >
+                  {myJobs.length}
+                </span>
+              )}
+            </button>
+            <button
+              className={`customer-tab-btn ${activeTab === 'available-jobs' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('available-jobs');
+                fetchAvailableJobs();
+              }}
+            >
+              <Search size={18} />
+              Available Jobs
+            </button>
+            <button
+              className={`customer-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              <User size={18} />
+              Profile
+            </button>
+          </div>
+        </header>
+
+        {activeTab === 'my-jobs' && (
+          <div className="tab-content fade-in">
+            {myJobs.length === 0 ? (
+              <div className="empty-requests-state">
+                <div className="empty-requests-icon">
+                  <Briefcase size={48} color="var(--primary-light-text)" />
+                </div>
+                <h3>No active jobs</h3>
+                <p>Browse available service requests to get started and earn.</p>
+                <button
+                  className="worker-action-btn"
+                  onClick={() => {
+                    setActiveTab('available-jobs');
+                    fetchAvailableJobs();
+                  }}
+                  style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'var(--primary)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Browse Available Jobs
+                </button>
+              </div>
+            ) : (
+              <div className="requests-list">
+                {myJobs.map((job) => (
+                  <div key={job._id} className="request-item-card">
+                    <div className="request-main-info">
+                      <div className="request-header-row">
+                        <h3 className="request-title">{job.title || job.serviceId?.name || 'Service Request'}</h3>
+                        <span className={`status-badge status-${job.status}`}>
+                          {job.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </div>
+
+                      <p style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                        {job.description}
+                      </p>
+
+                      <div className="request-meta">
+                        <span className="meta-item"><MapPin size={16} /> {job.address}</span>
+                        <span className="meta-item"><Calendar size={16} /> {formatDate(job.scheduledAt)}</span>
+                        {job.serviceId?.category && <span className="meta-item"><Wrench size={16} /> {job.serviceId.category}</span>}
+                        {job.customerId?.userId?.name && <span className="meta-item"><User size={16} /> Customer: {job.customerId.userId.name}</span>}
+                      </div>
+
+                      {job.preServicePhotos && job.preServicePhotos.length > 0 && (
+                        <div className="request-photos-grid">
+                          <span className="photo-label">Pre-service Photos:</span>
+                          <div className="photos-row">
+                            {job.preServicePhotos.map((photo, idx) => (
+                              <img
+                                key={`pre-${idx}`}
+                                src={photo}
+                                alt="Pre-service"
+                                className="photo-thumb"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setLightbox({ photos: job.preServicePhotos!, index: idx })}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {job.postServicePhotos && job.postServicePhotos.length > 0 && (
+                        <div className="request-photos-grid">
+                          <span className="photo-label">Post-service Photos:</span>
+                          <div className="photos-row">
+                            {job.postServicePhotos.map((photo, idx) => (
+                              <img
+                                key={`post-${idx}`}
+                                src={photo}
+                                alt="Post-service"
+                                className="photo-thumb"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setLightbox({ photos: job.postServicePhotos!, index: idx })}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {job.status === 'accepted' && (
+                          <button
+                            className="worker-action-btn btn-start"
+                            onClick={() => handleStartJob(job._id)}
+                            disabled={actionLoadingId === job._id}
+                          >
+                            {actionLoadingId === job._id ? (
+                              <Loader2 className="spin" size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                            ) : (
+                              <Play size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                            )}
+                            Start Job
+                          </button>
+                        )}
+
+                        {job.status === 'in_progress' && (
+                          <>
+                            <label className="btn-upload-photo" htmlFor={`post-photo-${job._id}`}>
+                              {actionLoadingId === job._id + '_upload' ? (
+                                <Loader2 className="spin" size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                              ) : (
+                                <Camera size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                              )}
+                              Upload After Photos
+                            </label>
+                            <input
+                              id={`post-photo-${job._id}`}
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handlePhotoUpload(job._id, e.target.files)}
+                              disabled={actionLoadingId === job._id + '_upload'}
+                            />
+
+                            <button
+                              className="worker-action-btn btn-complete"
+                              onClick={() => handleCompleteJob(job._id)}
+                              disabled={actionLoadingId === job._id}
+                            >
+                              {actionLoadingId === job._id ? (
+                                <Loader2 className="spin" size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                              ) : (
+                                <CheckCircle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                              )}
+                              Mark Complete
+                            </button>
+                          </>
+                        )}
+
+                        {job.status === 'completed' && (
+                          <span className="status-badge status-completed" style={{ fontSize: '0.8rem' }}>
+                            <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} />
+                            Job Completed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'available-jobs' && (
+          <div className="tab-content fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2>Available Opportunities</h2>
+              <button
+                onClick={fetchAvailableJobs}
+                className="customer-tab-btn"
+                style={{ padding: '0.5rem' }}
+                disabled={isLoadingAvailable}
+              >
+                <RefreshCw size={18} className={isLoadingAvailable ? 'spin' : ''} />
+              </button>
+            </div>
+
+            {isLoadingAvailable ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+                <Loader2 size={32} className="spin" color="var(--primary)" />
+              </div>
+            ) : availableJobs.length === 0 ? (
+              <div className="empty-requests-state">
+                <div className="empty-requests-icon">
+                  <Search size={48} color="var(--primary-light-text)" />
+                </div>
+                <h3>No jobs available right now</h3>
+                <p>Check back later for new service requests in your area.</p>
+              </div>
+            ) : (
+              <div className="services-grid">
+                {availableJobs.map((job) => (
+                  <div
+                    key={job._id}
+                    className="service-card"
+                    onClick={() => setSelectedJobModal(job)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <JobCardCarousel
+                      photos={job.preServicePhotos}
+                      onClick={() => setSelectedJobModal(job)}
+                    />
+
+                    <div className="service-card-header">
+                      <h3 className="service-card-title">{job.title || job.serviceId?.name}</h3>
+                      {job.serviceId?.category && (
+                        <span className="service-card-category">{job.serviceId.category}</span>
+                      )}
+                    </div>
+
+                    <p className="service-card-desc" style={{ flex: 1 }}>{job.description}</p>
+
+                    <div
+                      className="request-meta"
+                      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '0.75rem 0' }}
+                    >
+                      <span className="meta-item"><MapPin size={16} /> {job.address}</span>
+                      <span className="meta-item"><Calendar size={16} /> {formatDate(job.scheduledAt)}</span>
+                      {job.preServicePhotos && job.preServicePhotos.length > 0 && (
+                        <span className="meta-item" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                          <Images size={16} /> {job.preServicePhotos.length} Pre-photo(s) attached
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="service-card-footer">
+                      <div className="service-price">
+                        {job.serviceId?.basePrice ? `₹${job.serviceId.basePrice}` : 'Price TBD'}
+                      </div>
+                      <button
+                        className="btn-book-service"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcceptJob(job);
+                        }}
+                        disabled={actionLoadingId === job._id}
+                      >
+                        {actionLoadingId === job._id ? <Loader2 className="spin" size={16} /> : 'Accept Job'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'profile' && userData && (
+          <section>
+            <div className="worker-stats-row">
+              <div className="worker-stat-item">
+                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'completed').length}</div>
+                <div className="worker-stat-label">Completed</div>
+              </div>
+              <div className="worker-stat-item">
+                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'in_progress').length}</div>
+                <div className="worker-stat-label">In Progress</div>
+              </div>
+              <div className="worker-stat-item">
+                <div className="worker-stat-number">{myJobs.filter((j) => j.status === 'accepted').length}</div>
+                <div className="worker-stat-label">Accepted</div>
+              </div>
+            </div>
+
+            <div className="worker-profile-card">
+              <div className="worker-profile-header">
+                <div className="worker-avatar">
+                  {userData.name ? userData.name.charAt(0).toUpperCase() : 'W'}
+                </div>
+                <h2 className="worker-profile-name">{userData.name}</h2>
+                <span className="worker-profile-role-badge">
+                  <Shield size={13} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Worker
+                </span>
+              </div>
+
+              <div className="worker-profile-info">
+                <div className="worker-profile-field">
+                  <Mail size={18} />
+                  <div className="worker-profile-field-content">
+                    <span className="worker-profile-label">Email Address</span>
+                    <span className="worker-profile-value">{userData.email}</span>
+                  </div>
+                </div>
+
+                <div className="worker-profile-field">
+                  <Phone size={18} />
+                  <div className="worker-profile-field-content">
+                    <span className="worker-profile-label">Mobile Number</span>
+                    <span className="worker-profile-value">{userData.mobileNumber || 'Not provided'}</span>
+                  </div>
+                </div>
+
+                <div className="worker-profile-field">
+                  <Star size={18} />
+                  <div className="worker-profile-field-content">
+                    <span className="worker-profile-label">Role</span>
+                    <span className="worker-profile-value">{(userData.roles || []).join(', ') || 'Worker'}</span>
+                  </div>
+                </div>
+
+                {userData.createdAt && (
+                  <div className="worker-profile-field">
+                    <Clock size={18} />
+                    <div className="worker-profile-field-content">
+                      <span className="worker-profile-label">Member Since</span>
+                      <span className="worker-profile-value">
+                        {new Date(userData.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Job Details Modal */}
+      {selectedJobModal && (
+        <div className="job-detail-overlay" onClick={() => setSelectedJobModal(null)}>
+          <div className="job-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="job-detail-header">
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                  {selectedJobModal.title || selectedJobModal.serviceId?.name || 'Service Details'}
+                </h2>
+                {selectedJobModal.serviceId?.category && (
+                  <span className="service-card-category" style={{ marginTop: '4px', display: 'inline-block' }}>
+                    {selectedJobModal.serviceId.category}
+                  </span>
+                )}
+              </div>
+              <button className="job-detail-close" onClick={() => setSelectedJobModal(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="job-detail-body">
+              {/* Pre-Service Photos Gallery */}
+              <div>
+                <h3
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: 'var(--text-main)'
+                  }}
+                >
+                  <Camera size={18} color="var(--primary)" /> Pre-Service Photos Gallery
+                </h3>
+                {selectedJobModal.preServicePhotos && selectedJobModal.preServicePhotos.length > 0 ? (
+                  <div className="job-detail-gallery">
+                    {selectedJobModal.preServicePhotos.map((photo, idx) => (
+                      <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+                        <img
+                          src={photo}
+                          alt={`Pre photo ${idx + 1}`}
+                          onClick={() => setLightbox({ photos: selectedJobModal.preServicePhotos!, index: idx })}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '6px',
+                            right: '6px',
+                            background: 'rgba(0,0,0,0.65)',
+                            color: 'white',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            pointerEvents: 'none',
+                            backdropFilter: 'blur(2px)'
+                          }}
+                        >
+                          <Maximize2 size={12} /> Click to enlarge
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: '2rem',
+                      textAlign: 'center',
+                      background: 'var(--bg-input)',
+                      border: '1px dashed var(--border-color)',
+                      borderRadius: '10px',
+                      color: 'var(--text-muted)'
+                    }}
+                  >
+                    No pre-service photos uploaded for this job request.
+                  </div>
+                )}
+              </div>
+
+              {/* Job Details Section */}
+              <div className="job-detail-info">
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)' }}>
+                  Job Description & Requirements
+                </h3>
+                <p style={{ color: 'var(--text-main)', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
+                  {selectedJobModal.description}
+                </p>
+
+                <div
+                  className="job-detail-meta"
+                  style={{
+                    marginTop: '1rem',
+                    padding: '1.25rem',
+                    background: 'var(--bg-input)',
+                    borderRadius: '10px',
+                    gap: '0.75rem',
+                    border: '1px solid var(--border-color)'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderBottom: '1px solid var(--border-color)',
+                      paddingBottom: '0.75rem'
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Offered Price:</span>
+                    <span className="service-price" style={{ fontSize: '1.25rem' }}>
+                      {selectedJobModal.serviceId?.basePrice ? `₹${selectedJobModal.serviceId.basePrice}` : 'Price TBD'}
+                    </span>
+                  </div>
+
+                  <div className="meta-item"><MapPin size={16} /> <strong>Location:</strong> {selectedJobModal.address}</div>
+                  <div className="meta-item"><Calendar size={16} /> <strong>Scheduled Date:</strong> {formatDate(selectedJobModal.scheduledAt)}</div>
+                  {selectedJobModal.customerId?.userId?.name && (
+                    <div className="meta-item"><User size={16} /> <strong>Customer Name:</strong> {selectedJobModal.customerId.userId.name}</div>
+                  )}
+                  {selectedJobModal.customerId?.userId?.mobileNumber && (
+                    <div className="meta-item"><Phone size={16} /> <strong>Customer Contact:</strong> {selectedJobModal.customerId.userId.mobileNumber}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="job-detail-actions">
+              <button
+                className="customer-tab-btn"
+                onClick={() => setSelectedJobModal(null)}
+                style={{ marginRight: '0.75rem' }}
+              >
+                Close
+              </button>
+              <button
+                className="worker-action-btn btn-accept"
+                onClick={() => handleAcceptJob(selectedJobModal)}
+                disabled={actionLoadingId === selectedJobModal._id}
+              >
+                {actionLoadingId === selectedJobModal._id ? <Loader2 className="spin" size={16} /> : 'Accept Job'}
+              </button>
+            </div>
+          </div>
         </div>
-      </main>
+      )}
+
+      {/* Lightbox / Fullscreen Image Modal */}
+      {lightbox && (
+        <div className="photo-lightbox-overlay" onClick={() => setLightbox(null)}>
+          <img
+            src={lightbox.photos[lightbox.index]}
+            alt={`Full view ${lightbox.index + 1}`}
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <button className="photo-lightbox-close" onClick={() => setLightbox(null)}>
+            <X size={24} />
+          </button>
+
+          {lightbox.photos.length > 1 && (
+            <>
+              <button
+                className="photo-lightbox-nav prev"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          index: (prev.index - 1 + prev.photos.length) % prev.photos.length
+                        }
+                      : null
+                  );
+                }}
+              >
+                <ChevronLeft size={28} />
+              </button>
+
+              <button
+                className="photo-lightbox-nav next"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightbox((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          index: (prev.index + 1) % prev.photos.length
+                        }
+                      : null
+                  );
+                }}
+              >
+                <ChevronRight size={28} />
+              </button>
+
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '1.5rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  color: 'white',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  zIndex: 2020,
+                  pointerEvents: 'none'
+                }}
+              >
+                {lightbox.index + 1} / {lightbox.photos.length}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
