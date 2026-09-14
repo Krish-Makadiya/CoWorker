@@ -1,7 +1,13 @@
 import React from "react";
 import type { ComponentType } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, Plus, Server, ShieldCheck, RefreshCw, LogOut } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  ShieldCheck,
+  RefreshCw,
+  LogOut,
+} from "lucide-react";
 
 export interface CooperativeItem {
   _id: string;
@@ -18,8 +24,11 @@ export interface CooperativeItem {
 export interface NavbarProps {
   portalName?: string;
   portalSubtitle?: string;
-  portalIcon?: ComponentType<{ size?: number | string; color?: string; className?: string }>;
-  showDbBadge?: boolean;
+  portalIcon?: ComponentType<{
+    size?: number | string;
+    color?: string;
+    className?: string;
+  }>;
 
   // Optional Federation-specific controls
   cooperatives?: CooperativeItem[];
@@ -40,7 +49,6 @@ export default function Navbar({
   portalName = "Dashboard",
   portalSubtitle,
   portalIcon: PortalIcon = Building2,
-  showDbBadge = true,
   cooperatives,
   selectedCoopId,
   onSelectCoop,
@@ -62,50 +70,103 @@ export default function Navbar({
   };
 
   return (
-    <nav className="glass-card dashboard-navbar" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, padding: "14px 28px", marginBottom: "24px", background: "#ffffff", borderBottom: "1px solid var(--border-color, #e2e7e0)" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        
+    <nav
+      className="glass-card dashboard-navbar"
+      style={{
+        borderRadius: 0,
+        borderTop: 0,
+        borderLeft: 0,
+        borderRight: 0,
+        padding: "14px 28px",
+        marginBottom: "24px",
+        background: "#ffffff",
+        borderBottom: "1px solid var(--border-color, #e2e7e0)",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1280px",
+          margin: "0 auto",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+        }}
+      >
         {/* Brand Identity */}
-        <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "10px",
-            background: "var(--primary, #4e6340)",
+        <Link
+          to="/"
+          style={{
+            textDecoration: "none",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 3px 10px rgba(78, 99, 64, 0.2)",
-            flexShrink: 0
-          }}>
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: "var(--primary, #4e6340)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 3px 10px rgba(78, 99, 64, 0.2)",
+              flexShrink: 0,
+            }}
+          >
             <PortalIcon size={22} color="#ffffff" />
           </div>
           <div>
-            <div style={{ fontFamily: "var(--font-heading, sans-serif)", fontWeight: 800, fontSize: "1.2rem", letterSpacing: "-0.02em", color: "var(--text-main, #1b2418)" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-heading, sans-serif)",
+                fontWeight: 800,
+                fontSize: "1.2rem",
+                letterSpacing: "-0.02em",
+                color: "var(--text-main, #1b2418)",
+              }}
+            >
               GIG Platform
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--primary, #4e6340)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--primary, #4e6340)",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                fontWeight: 600,
+              }}
+            >
               <ShieldCheck size={13} /> {portalSubtitle || portalName}
             </div>
           </div>
         </Link>
 
         {/* Action Controls & Badges */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          
-          {/* Live DB Connection Badge */}
-          {showDbBadge && (
-            <div className="badge badge-emerald" style={{ padding: "6px 14px", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Server size={13} /> MongoDB Connected (sih_2026)
-            </div>
-          )}
-
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
           {/* Refresh button */}
           {onRefresh && (
             <button
               onClick={onRefresh}
               className="btn btn-secondary"
-              style={{ padding: "8px 14px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
+              style={{
+                padding: "8px 14px",
+                fontSize: "0.85rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
               title="Refresh database records"
             >
               <RefreshCw size={14} className={loading ? "spin" : ""} /> Refresh
@@ -118,7 +179,10 @@ export default function Navbar({
               <select
                 value={selectedCoopId || ""}
                 onChange={(e) => {
-                  if (e.target.value === "NEW_ONBOARDING" && onStartOnboarding) {
+                  if (
+                    e.target.value === "NEW_ONBOARDING" &&
+                    onStartOnboarding
+                  ) {
                     onStartOnboarding();
                   } else {
                     onSelectCoop(e.target.value);
@@ -131,7 +195,7 @@ export default function Navbar({
                   background: "#f9faf8",
                   borderColor: "var(--border-color, #e2e7e0)",
                   minWidth: "240px",
-                  color: "var(--text-main, #1b2418)"
+                  color: "var(--text-main, #1b2418)",
                 }}
               >
                 <optgroup label="MongoDB Federations">
@@ -155,7 +219,13 @@ export default function Navbar({
             <button
               onClick={onStartOnboarding}
               className="btn btn-primary"
-              style={{ padding: "9px 18px", fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "6px" }}
+              style={{
+                padding: "9px 18px",
+                fontSize: "0.88rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
             >
               <Plus size={16} /> Onboard Federation
             </button>
@@ -174,13 +244,12 @@ export default function Navbar({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              fontWeight: 600
+              fontWeight: 600,
             }}
             title="Logout"
           >
             <LogOut size={16} /> Logout
           </button>
-
         </div>
       </div>
     </nav>

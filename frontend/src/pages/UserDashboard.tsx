@@ -628,28 +628,28 @@ export default function UserDashboard() {
               className={`customer-tab-btn ${activeTab === 'active-requests' ? 'active' : ''}`}
               onClick={() => setActiveTab('active-requests')}
             >
-              <ClipboardList size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Active Requests ({activeRequests.length})
+              <ClipboardList size={18} /> Active Requests ({activeRequests.length})
             </button>
 
             <button
               className={`customer-tab-btn ${activeTab === 'completed-jobs' ? 'active' : ''}`}
               onClick={() => setActiveTab('completed-jobs')}
             >
-              <CheckCircle2 size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Completed Jobs ({completedRequests.length})
+              <CheckCircle2 size={18} /> Completed Jobs ({completedRequests.length})
             </button>
 
             <button
               className={`customer-tab-btn ${activeTab === 'new-request' ? 'active' : ''}`}
               onClick={() => setActiveTab('new-request')}
             >
-              <Plus size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Book New Service
+              <Plus size={18} /> Book New Service
             </button>
 
             <button
               className={`customer-tab-btn ${activeTab === 'browse' ? 'active' : ''}`}
               onClick={() => setActiveTab('browse')}
             >
-              <Wrench size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Browse Services
+              <Wrench size={18} /> Browse Services
             </button>
           </div>
         </div>
@@ -915,7 +915,7 @@ export default function UserDashboard() {
                     style={{
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: '#2563eb',
+                      color: '#4e6340',
                       textTransform: 'uppercase',
                     }}
                   >
@@ -1192,13 +1192,13 @@ export default function UserDashboard() {
 
             {loadingWorkerProfile ? (
               <div style={{ textAlign: 'center', padding: '2.5rem' }}>
-                <Loader2 className="animate-spin" size={24} color="#2563eb" style={{ margin: '0 auto 8px auto' }} />
+                <Loader2 className="animate-spin" size={24} color="#4e6340" style={{ margin: '0 auto 8px auto' }} />
                 <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading Worker Profile...</span>
               </div>
             ) : selectedWorkerProfile && (
               <div className="worker-modal-body" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.4rem', border: '2px solid #bfdbfe' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#e6ece3', color: '#4e6340', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.4rem', border: '2px solid #cfd8cb' }}>
                     {selectedWorkerProfile?.name?.charAt(0) || 'W'}
                   </div>
                   <div style={{ flex: 1 }}>
@@ -1227,7 +1227,7 @@ export default function UserDashboard() {
                 <div className="worker-info-section">
                   <span className="worker-info-label">Contact Information</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <Phone size={18} color="#2563eb" />
+                    <Phone size={18} color="#4e6340" />
                     <div>
                       <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Phone Number</span>
                       <a href={`tel:${selectedWorkerProfile.mobileNumber}`} style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', textDecoration: 'none' }}>
@@ -1239,14 +1239,14 @@ export default function UserDashboard() {
 
                 <div className="worker-info-section">
                   <span className="worker-info-label">Cooperative / Union Affiliation</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#eff6ff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
-                    <Building2 size={18} color="#2563eb" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#e6ece3', padding: '12px 14px', borderRadius: '10px', border: '1px solid #cfd8cb' }}>
+                    <Building2 size={18} color="#4e6340" />
                     <div>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e40af' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2c3b24' }}>
                         {selectedWorkerProfile.cooperative?.name || 'Independent Skilled Professional'}
                       </span>
                       {selectedWorkerProfile.cooperative?.location && (
-                        <span style={{ display: 'block', fontSize: '0.78rem', color: '#3b82f6' }}>
+                        <span style={{ display: 'block', fontSize: '0.78rem', color: '#4e6340' }}>
                           Location: {selectedWorkerProfile.cooperative.location}
                         </span>
                       )}

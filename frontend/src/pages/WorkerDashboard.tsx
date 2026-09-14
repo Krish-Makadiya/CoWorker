@@ -1487,8 +1487,8 @@ export default function WorkerDashboard() {
                     style={{
                       padding: "12px",
                       borderRadius: "10px",
-                      background: "rgba(37, 99, 235, 0.1)",
-                      color: "#2563eb",
+                      background: "rgba(78, 99, 64, 0.15)",
+                      color: "#4e6340",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1581,7 +1581,7 @@ export default function WorkerDashboard() {
                       background:
                         isJoiningCoop || !selectedCoopId
                           ? "#cbd5e1"
-                          : "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                          : "linear-gradient(135deg, #4e6340 0%, #3e5132 100%)",
                       color: "#ffffff",
                       fontWeight: 600,
                       border: "none",
